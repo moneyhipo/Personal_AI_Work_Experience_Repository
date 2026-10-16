@@ -27,6 +27,11 @@ AI(Claude 등)와 함께 프로젝트를 하면서 겪은 실수와 교훈을 �
 | [unity-mono-harmony.md](game/unity-mono-harmony.md) | Unity Mono 게임 + Harmony/BaseMod C# 모드 |
 | [rpgmaker-mv-nwjs.md](game/rpgmaker-mv-nwjs.md) | RPG Maker MV/MZ (NW.js) JS 플러그인 모드 |
 
+### handoff/ (프로젝트 인수인계)
+| 문서 | 내용 |
+|---|---|
+| [handoff/README.md](handoff/README.md) | 진행 중인 프로젝트별 `AGENTS.md`. 다른 AI가 이어받을 때 읽기 |
+
 ## 출처 프로젝트
 
 - Lobotomy Corporation 바닐라 버그픽스 (Unity Mono, C#, Harmony 1, BaseMod)
