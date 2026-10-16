@@ -18,8 +18,11 @@ Codex 등 코딩 에이전트용 인수인계 문서입니다. 2026-10-16까지 
    - 위키는 참고만 하고, 판단 근거는 원본 코드입니다.
    - 위키만 보고 버그로 오해한 사례가 있습니다(어린 왕자 사망 스택, 별의 소리 즉사 등).
 3. **git에는 모드 자체에 필요한 파일만 넣습니다.**
-   - 넣는 것: 소스, Info, `Common.props`, README, LICENSE, 이 파일.
-   - 로컬에만 두고 커밋하지 않는 것(`.gitignore`): `package.ps1`, `CHANGELOG.md`, `nexus/`, `audit/`, `HANDOFF.md`, `ModBugFix/`, `dist/`.
+   - 넣는 것: 소스, Info, `Common.props`, README, LICENSE, 이 파일, `dev/`.
+   - `dev/`: 작업 기록과 출시하지 않은 두 번째 모드입니다. 저장소가 비공개라서 함께 올렸습니다.
+     - `CHANGELOG.md`, `HANDOFF.md`, `audit/`, `ModBugFix/`가 들어 있습니다.
+     - 단, 디컴파일한 게임 코드(`dev/audit/decomp/`)는 올리지 않습니다.
+   - 로컬에만 두고 커밋하지 않는 것(`.gitignore`): `package.ps1`, `nexus/`, `dist/`.
 4. 커밋과 푸시는 사용자가 요청할 때만 합니다. Nexus 업로드는 사용자가 직접 합니다.
 5. 사용자와는 한국어로 대화합니다. 모드 안에 들어가는 문구, 로그, Nexus 설명은 영어로 씁니다. README는 한국어로 씁니다.
 6. 요청받은 버그와 관계없는 코드는 리팩터링하지 않습니다. 기존 수정 방식을 유지합니다.
@@ -56,7 +59,8 @@ dotnet build VanillaBugFix -c Release -p:GameManaged=D:\steam\steamapps\common\L
 ```
 
 - 설치: `VanillaBugFix\bin\Release\BugFix_Vanilla.dll`을 `D:\steam\steamapps\common\LobotomyCorp\LobotomyCorp_Data\BaseMods\BugFix_Vanilla\`에 복사합니다.
-- 배포 zip: `.\package.ps1 -Version x.y.z -GameManaged <위 경로>`. 로컬 전용 파일이라 git에는 없습니다.
+- 배포 zip: `.\package.ps1 -Version x.y.z -GameManaged <위 경로>`. 로컬 전용 파일이라 git에는 없습니다. 없으면 빌드한 DLL과 `Mod/BugFix_Vanilla/Info/`를 `BugFix_Vanilla/` 폴더에 넣어 zip으로 묶습니다(경로 구분자는 `/`).
+- 변경 기록은 `dev/CHANGELOG.md`에 적습니다.
 - 게임을 실행한 뒤 볼 로그는 `LobotomyCorp_Data\BaseMods\` 아래에 있습니다.
   - `BugFix_Vanilla_log.txt`: `[FAIL]`, `[WARN]`, `[CONFLICT]`, `[TRY]`를 확인합니다.
   - `BugFix_ErrorLogs\`
@@ -76,12 +80,14 @@ dotnet build VanillaBugFix -c Release -p:GameManaged=D:\steam\steamapps\common\L
 2. 감사(전체 코드 검토)에서 아직 안 한 범위:
    - E.G.O. 장비 스크립트 전체
    - 환상체 A–L 재점검
-   - 자세한 내용은 로컬 `audit/PROGRESS.md`, `audit/VERIFIED.md`에 있습니다.
+   - 자세한 내용은 `dev/audit/PROGRESS.md`, `dev/audit/VERIFIED.md`에 있습니다.
 3. 세이브 복구 방법은 사용자 결정을 기다리고 있습니다.
    - 선택지: Steam 클라우드 확인 / 기억으로 재입력 / 일괄 지급
    - 백업 위치: `%USERPROFILE%\AppData\LocalLow\Project_Moon\Lobotomy\_backup_2026-10-14\`
-4. `ModBugFix/`(BugFix_Mods)는 설치된 다른 모드와 BaseMod의 버그를 고치는 두 번째 모드입니다. 출시하지 않았고 로컬에만 있습니다. 내용은 `HANDOFF.md`에 있습니다.
-5. 보류 중인 수정 후보(BigBadWolf 등 밸런스 관련) 목록은 로컬 `HANDOFF.md`와 `audit/BALANCE_HOLD.md`에 있습니다.
+4. `dev/ModBugFix/`(BugFix_Mods)는 설치된 다른 모드와 BaseMod의 버그를 고치는 두 번째 모드입니다. 출시하지 않았습니다. 내용은 `dev/HANDOFF.md`에 있습니다.
+   - 빌드: `dotnet build dev/ModBugFix -c Release -p:GameManaged=<위 경로>`
+   - 설치: `BaseMods\BugFix_Mods\`에 복사합니다.
+5. 보류 중인 수정 후보(BigBadWolf 등 밸런스 관련) 목록은 `dev/HANDOFF.md`와 `dev/audit/BALANCE_HOLD.md`에 있습니다.
 
 ## 처음 받았을 때 할 일
 코드를 고치기 전에 다음을 먼저 합니다.
