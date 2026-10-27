@@ -46,6 +46,7 @@ Codex 등 코딩 에이전트용 인수인계 문서입니다. 2026-10-26까지 
   - `node --max-old-space-size=512 tools/audit_personal.js` — 개인 값 감사(데이터 전수, 모드 목록과 대조). 맨 위 "self check" 줄이 통과해야 합니다.
   - `node tools/test/e2e.js` — 70개. 로그가 현재 폴더에 쌓이므로 임시 폴더에서 실행합니다.
   - `node tools/test/e2e_sub.js` — 28개. 이것도 임시 폴더에서 실행합니다.
+  - `node tools/test/flows.js [필터]` / `node tools/test/e2e_flow.js [필터]` — 흐름 테스트(2026-10-28). 여러 PC가 프레임 전체를 돌며 끊김·재접속·불러오기를 이어서 봅니다(드라이버 `tools/test/flow_net.js`). 약 3분 + 25초, 힙 옵션 필요 없음. `KNOWN BUG`는 찾았지만 아직 안 고친 모드 버그입니다(`docs/조사/흐름테스트_결과.md`).
   - 테스트는 게임 폴더를 `D:\steam\...`, `D:\SteamLibrary\...` 순서로 찾습니다. 다른 곳이면 환경변수 **`FH2_GAME`**에 게임 폴더(`www`가 있는 곳)를 줍니다(`tools/test/harness.js`). 메인 컴퓨터에서는 사본 `FH2_GAME=D:/git_desk/FH2_dev_game`(아래 "PC별 차이"). (`FH2_DATA`는 `tools/dump.js`·`pr.js`·`audit_personal.js` 같은 덤프 스크립트용 `www/data` 경로입니다.)
   - 테스트는 한 번에 하나씩 돌립니다(사용자 PC 메모리).
   - **코드를 바꾸면 세 테스트를 모두 돌리고 결과를 보고합니다.**
