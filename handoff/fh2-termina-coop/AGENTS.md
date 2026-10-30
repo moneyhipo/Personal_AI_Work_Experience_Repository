@@ -50,7 +50,7 @@ Codex 등 코딩 에이전트용 인수인계 문서입니다. 2026-10-30까지 
   - 테스트는 게임 폴더를 `D:\steam\...`, `D:\SteamLibrary\...`, `C:\Program Files (x86)\Steam\...` 순서로 찾습니다. 다른 곳이면 환경변수 **`FH2_GAME`**에 게임 폴더(`www`가 있는 곳)를 줍니다(`tools/test/harness.js`). 메인 컴퓨터에서는 사본 `FH2_GAME=D:/git_desk/FH2_dev_game`(아래 "PC별 차이"). (`FH2_DATA`는 `tools/dump.js`·`pr.js`·`audit_personal.js` 같은 덤프 스크립트용 `www/data` 경로입니다.)
   - 테스트는 한 번에 하나씩 돌립니다(사용자 PC 메모리).
   - **평소에는 바꾼 기능의 필터 테스트만 돌리고, 전체 묶음은 버전을 올리기 직전에만 돌립니다(사용자 2026-10-30).**
-- 배포 zip: `node tools/make_release.js <버전>`(버전 필수) → `dist/FH2_Coop_<버전>.zip`과 헬퍼 `dist/FH2_Coop_SteamHelper_<버전>.zip`(헬퍼 zip의 이름과 README 버전은 모드 버전을 따른다. 헬퍼 exe는 0.42.0이라 다를 수 있다). 배포판 README의 제약·버그·접속 안내는 `mod/KNOWN_ISSUES.txt`(영/한)에서 붙습니다.
+- 배포 zip: `node tools/make_release.js <버전>`(버전 필수) → `dist/FH2_Coop_<버전>.zip`과 헬퍼 `dist/FH2_Coop_SteamHelper_<버전>.zip`(헬퍼 zip의 이름과 README 버전은 모드 버전을 따른다. 지금 헬퍼 exe는 0.42.0이지만, 사용자 결정 2026-10-31로 0.5.0 배포 때 csproj 버전도 모드 버전으로 올려 다시 빌드해 통일한다). 배포판 README의 제약·버그·접속 안내는 `mod/KNOWN_ISSUES.txt`(영/한)에서 붙습니다.
 - Steam 헬퍼(C#):
   - 위치: `tools/steam_helper`. net10.0, Steamworks.NET 2024.8.0, Steamworks 네이티브 `steam_api64.dll`을 씁니다.
   - 빌드: `dotnet publish -c Release -o publish` 후 exe를 `mod/fh_steam_helper/`에 복사합니다.
