@@ -47,7 +47,7 @@ Codex 등 코딩 에이전트용 인수인계 문서입니다. 2026-10-26까지 
   - `node tools/test/e2e.js` — 70개. 로그가 현재 폴더에 쌓이므로 임시 폴더에서 실행합니다.
   - `node tools/test/e2e_sub.js` — 28개. 이것도 임시 폴더에서 실행합니다.
   - `node tools/test/flows.js [필터]` / `node tools/test/e2e_flow.js [필터]` — 흐름 테스트(2026-10-28). 여러 PC가 프레임 전체를 돌며 끊김·재접속·불러오기를 이어서 봅니다(드라이버 `tools/test/flow_net.js`). 약 3분 + 25초, 힙 옵션 필요 없음. `KNOWN BUG`는 찾았지만 아직 안 고친 모드 버그입니다(`docs/조사/흐름테스트_결과.md`).
-  - 테스트는 게임 폴더를 `D:\steam\...`, `D:\SteamLibrary\...` 순서로 찾습니다. 다른 곳이면 환경변수 **`FH2_GAME`**에 게임 폴더(`www`가 있는 곳)를 줍니다(`tools/test/harness.js`). 메인 컴퓨터에서는 사본 `FH2_GAME=D:/git_desk/FH2_dev_game`(아래 "PC별 차이"). (`FH2_DATA`는 `tools/dump.js`·`pr.js`·`audit_personal.js` 같은 덤프 스크립트용 `www/data` 경로입니다.)
+  - 테스트는 게임 폴더를 `D:\steam\...`, `D:\SteamLibrary\...`, `C:\Program Files (x86)\Steam\...` 순서로 찾습니다. 다른 곳이면 환경변수 **`FH2_GAME`**에 게임 폴더(`www`가 있는 곳)를 줍니다(`tools/test/harness.js`). 메인 컴퓨터에서는 사본 `FH2_GAME=D:/git_desk/FH2_dev_game`(아래 "PC별 차이"). (`FH2_DATA`는 `tools/dump.js`·`pr.js`·`audit_personal.js` 같은 덤프 스크립트용 `www/data` 경로입니다.)
   - 테스트는 한 번에 하나씩 돌립니다(사용자 PC 메모리).
   - **코드를 바꾸면 세 테스트를 모두 돌리고 결과를 보고합니다.**
 - 배포 zip: `node tools/make_release.js <버전>`(버전 필수) → `dist/FH2_Coop_<버전>.zip`. 배포판 README의 제약·버그·접속 안내는 `mod/KNOWN_ISSUES.txt`(영/한)에서 붙습니다.
@@ -76,6 +76,7 @@ Codex 등 코딩 에이전트용 인수인계 문서입니다. 2026-10-26까지 
 ## PC별 차이
 - 메인 컴퓨터: 게임 `D:\steam\steamapps\common\Fear & Hunger 2 Termina\`, 저장소 `D:\git_desk\...`, 테스트용 게임 사본 `FH2_GAME=D:/git_desk/FH2_dev_game`, 풀린 그림 `D:\git_desk\FH2_images`. 메모리 16GB.
 - 다른 PC: 저장소 `D:\github_desk\...`, 게임 `D:\SteamLibrary\steamapps\common\Fear & Hunger 2 Termina\`(테스트가 스스로 찾음, 그림은 암호화 `.rpgmvp`). **메모리 8GB**라 테스트는 하나씩, `node --expose-gc --max-old-space-size=1536 tools/test/run_tests.js`(전체 약 25분. 강제 GC 없이 1536MB면 "Sub trade" 묶음에서 메모리 부족). 게임 두 창을 띄우면 메모리가 모자라서, 게임 테스트는 메인 컴퓨터에서 합니다.
+- 새 노트북(2026-10-29~): 저장소 `C:\git_desk\...`, 드라이브는 C:만 있습니다. 게임은 Steam 기본 위치 `C:\Program Files (x86)\Steam\steamapps\common\Fear & Hunger 2 Termina\`(install.js·harness.js·덤프 스크립트·게스트창 bat이 세 번째 후보로 찾음). 메모리 16GB, i5-13420H. Node 26 LTS, .NET SDK 10, git, gh 설치됨. 풀린 그림은 `C:\git_desk\FH2_images`에 두면 테스트가 찾습니다(저장소 옆 폴더).
 - 테스트 도구는 테스트마다 플러그인 파일을 새로 읽습니다. 전체 테스트가 도는 동안 `mod/`와 `tools/test/`를 고치지 않습니다.
 
 ## 남은 일
