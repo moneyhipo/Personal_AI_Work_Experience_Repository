@@ -50,6 +50,7 @@ Codex 등 코딩 에이전트용 인수인계 문서입니다. 2026-10-30까지 
   - 테스트는 게임 폴더를 `D:\steam\...`, `D:\SteamLibrary\...`, `C:\Program Files (x86)\Steam\...` 순서로 찾습니다. 다른 곳이면 환경변수 **`FH2_GAME`**에 게임 폴더(`www`가 있는 곳)를 줍니다(`tools/test/harness.js`). 메인 컴퓨터에서는 사본 `FH2_GAME=D:/git_desk/FH2_dev_game`(아래 "PC별 차이"). (`FH2_DATA`는 `tools/dump.js`·`pr.js`·`audit_personal.js` 같은 덤프 스크립트용 `www/data` 경로입니다.)
   - 테스트는 한 번에 하나씩 돌립니다(사용자 PC 메모리).
   - **평소에는 바꾼 기능의 필터 테스트만 돌리고, 전체 묶음은 버전을 올리기 직전에만 돌립니다(사용자 2026-10-30).**
+- **버전은 고칠 때마다 올리지 않습니다(사용자 2026-11-03).** 지금 번호 그대로 zip을 다시 만들고 `docs/변경기록.md`의 그 버전 항목에 덧붙입니다. 새 번호는 사용자에게 묻고 올립니다. 같은 번호라도 코드가 바뀌면 친구 PC도 다시 깔아야 합니다(접속 때 코드 비교). 자세한 것은 `docs/버전에 관한 내용.md`.
 - 배포 zip: `node tools/make_release.js <버전> --helper 0.5.0` → `dist/FH2_Coop_<버전>.zip`(README가 헬퍼 `FH2_Coop_SteamHelper_0.5.0.zip`을 가리킴, 헬퍼 zip은 만들지 않음). **헬퍼는 0.5.0 고정**(사용자 2026-11-02, 10-31의 "헬퍼 버전은 모드 버전을 따른다"를 바꿈): 헬퍼 zip을 다시 만들면 해시가 바뀌어 디펜더 오진이 나므로 바이러스토탈 받은 `c6e2e9a2…` zip을 계속 쓰고, 헬퍼 코드가 바뀔 때만 올린다. 모드 버전은 0.n.n 한 단계씩(0.5.1, 0.5.2…). 자세한 것은 FH2 `docs/버전에 관한 내용.md`. 배포판 README의 제약·버그·접속 안내는 `mod/KNOWN_ISSUES.txt`(영/한)에서 붙습니다.
 - Steam 헬퍼(C#):
   - 위치: `tools/steam_helper`. net10.0, Steamworks.NET 2024.8.0, Steamworks 네이티브 `steam_api64.dll`을 씁니다.
