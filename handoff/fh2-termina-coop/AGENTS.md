@@ -60,8 +60,10 @@ Codex 등 코딩 에이전트용 인수인계 문서입니다. 2026-10-30까지 
   - 빌드: `dotnet publish -c Release -o publish` 후 exe를 `mod/fh_steam_helper/`에 복사합니다.
 - 한 PC에서 창 2개로 테스트할 때: 두 번째 창은 `tools/게스트창_실행.bat`으로 띄웁니다.
 
-## 최신 (2026-11-10 밤)
-- **1.0.0 배포 직전.** 이어서 할 순서는 FH2 저장소 `docs/진행상황.md` 맨 위 "노트북 인수인계" 절에 있다. 마지막 커밋의 모드 수정은 테스트 전(UNTESTED). 4인 테스트 전환 진행 메모: `tools/test/FOUR_PLAYER_WIP.md`.
+## 최신 (2026-11-10 새벽, 노트북)
+- **1.0.0 zip 다시 만듦, 공개 배포는 사용자 확인 대기.** 4인 테스트 도구 전환 끝(기본 4인, `FH2_PLAYERS=2`면 예전 방식), 전체 묶음 4인·2인 모두 통과, 미검증 커밋 확인·버그 고침. 결과와 사용자에게 물어볼 것: FH2 `docs/진행상황.md` 맨 위 "노트북 새벽 작업 결과". 테스트 도구 설계: `tools/test/FOUR_PLAYER_WIP.md`.
+- 테스트 이름 표시: `FH_TEST_NAMES=1 node --expose-gc tools/test/run_tests.js`면 실패 줄에 테스트 이름이 붙는다. 인원이 뜻인 테스트는 run_tests·flows의 `EXACT_PLAYERS` 표(이유 한 줄씩)에 넣는다.
+- 노트북에서 4인 전체 시간: run_tests 약 6분, flows 약 14~23분, e2e 3종 약 1분. 노트북에 python 있음(`python -I`).
 - 릴리스 묶음 스크립트(드라이브·친구·게스트 zip)와 전체 테스트 실행 스크립트는 `tools/local_build/`에 있다(전엔 메인 PC 임시 폴더에만 있었음).
 - 아래 "현재 상태 (0.41)"는 옛 기록이다.
 
