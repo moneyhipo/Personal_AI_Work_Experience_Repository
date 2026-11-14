@@ -41,7 +41,7 @@ AI(Claude 등)와 함께 프로젝트를 하면서 겪은 실수와 교훈을 �
 |---|---|
 | [modding-common.md](game/modding-common.md) | 게임 모딩 공통: 버그 판정, 데이터 분석, 멀티플레이 개조 |
 | [unity-mono-harmony.md](game/unity-mono-harmony.md) | Unity Mono 게임 + Harmony/BaseMod C# 모드 |
-| [rpgmaker-mv-nwjs.md](game/rpgmaker-mv-nwjs.md) | RPG Maker MV/MZ (NW.js) JS 플러그인 모드 |
+| [rpgmaker-mv-nwjs.md](game/rpgmaker-mv-nwjs.md) | RPG Maker MV/MZ (NW.js) JS 플러그인 모드, 번역 패치(Hendrix) |
 
 ### handoff/ (프로젝트 인수인계)
 | 문서 | 내용 |
@@ -52,6 +52,7 @@ AI(Claude 등)와 함께 프로젝트를 하면서 겪은 실수와 교훈을 �
 
 - Lobotomy Corporation 바닐라 버그픽스 (Unity Mono, C#, Harmony 1, BaseMod)
 - Fear & Hunger 2: Termina ATB 전투 + 코옵 멀티 모드 (RPG Maker MV 1.6, NW.js, Node)
+- Courage and Death (勇者与亡灵之都) 한글패치 (RPG Maker MV, Hendrix_Localization)
 - 해외 쇼핑몰 번역 + 디지털 옷장 안드로이드 앱 기획 (Kotlin, FastAPI, Google Play 출시 목표)
 
 ## 새 교훈 추가 규칙
