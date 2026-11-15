@@ -1,66 +1,66 @@
-# 검증과 디버깅
+# Verification and debugging
 
-## 버전·환경은 파일로 확인한 뒤에 단정한다
+## Confirm versions and environments from files before stating them
 
-**상황**: 첫 응답에서 게임 엔진을 "RPG Maker MZ"라고 단정했지만 실제로는 MV 1.6.0이었습니다. 엔진 버전에 따라 쓸 수 있는 라이브러리가 달라서(예: 오래된 Node에서는 최신 네이티브 모듈 불가) 설계가 바뀝니다.
+**Situation**: The first reply stated the game engine was "RPG Maker MZ"; it was actually MV 1.6.0. The engine version decides which libraries are usable (e.g. no modern native modules on an old Node), so the design changes.
 
-**원인**: 파일을 읽기 전에 기억에 의존했습니다.
+**Cause**: Relied on memory before reading files.
 
-**규칙**: 엔진, 런타임, 프레임워크 버전은 실제 파일(`package.json`, 코어 스크립트 이름, DLL 버전 등)로 확인한 뒤 설계합니다.
+**Rules**: Confirm engine, runtime and framework versions from real files (`package.json`, core script names, DLL versions, etc.) before designing.
 
-## "빌드 성공"은 "실제로 동작함"이 아니다
+## "Build succeeded" is not "it works"
 
-**상황**: C# 모드가 빌드는 성공했는데 게임에서 진입점조차 실행되지 않았고, 눈에 띄는 오류도 없었습니다.
+**Situation**: A C# mod built fine, but in the game not even its entry point ran, with no visible error.
 
-**규칙**: 진입점에서 로그를 남기고, 실제 실행 환경에서 그 로그가 찍히는지까지 확인합니다. 확인하지 못했으면 미검증이라고 보고합니다.
+**Rules**: Log at the entry point and confirm the log appears in the real runtime. If not confirmed, report it as unverified.
 
-## 추측하기 전에 계측한다
+## Measure before guessing
 
-**상황**: "적 턴이 너무 빨리 온다"는 체감 버그를 코드만 읽고 추측해 고쳤다가, 다른 버그(무한 루프)를 만들었습니다.
+**Situation**: A felt bug "enemy turns come too fast" was fixed by guessing from the code alone, which created another bug (an infinite loop).
 
-**규칙**: 체감 문제는 먼저 수치를 기록하는 계측 로그(프레임, 대상 이름, 속도 값, 배율 등)를 넣어 실측합니다. 체감 문제와 로직 문제를 숫자로 구분한 뒤 고칩니다. 고치기 전에 구현이 기획서와 다른지도 대조합니다(기획서에 이미 답이 적혀 있던 경우가 있었습니다).
+**Rules**: For felt problems, first add measurement logs that record numbers (frame, target name, speed values, multipliers) and measure. Separate feel from logic with numbers, then fix. Before fixing, also check whether the implementation differs from the planning doc (sometimes the answer was already written there).
 
-## 사람이 직접 조작해야 하는 것은 대체 검증 수단을 만든다
+## Build substitute checks for things a human must operate
 
-**상황**: AI는 게임을 직접 조작할 수 없어서, 사용자가 테스트하고 스크린샷으로 "안 됨"을 알려 주는 방식이 느렸습니다.
+**Situation**: The AI cannot play the game, so the loop of the user testing and sending "doesn't work" screenshots was slow.
 
-**규칙** (효과가 컸던 것들)
-- 가짜 클라이언트 스크립트로 실제 프로토콜에 접속해 서버 쪽을 검증합니다.
-- 실행 인스턴스마다 로그 파일을 남겨서, 사용자가 "로그 봐 줘"라고만 하면 AI가 직접 읽을 수 있게 합니다.
-- 실제 엔진·데이터를 헤드리스로 돌리는 자동 테스트 하네스를 만듭니다.
-- 구현 뒤에는 diff를 처음부터 다시 읽는 검수 단계를 따로 둡니다(메인 세션에서, `collaboration.md` "서브 에이전트는 병렬로 돌릴 때만"). 회차마다 결함이 꽤 나왔습니다.
-- 창을 여러 개 띄워 테스트할 때는 창 제목에 `[HOST]`/`[GUEST]`처럼 역할을 표시합니다. 사용자가 엉뚱한 창에서 조작해 버그로 오인한 일이 있었습니다.
+**Rules** (what helped most)
+- Connect to the real protocol with a fake client script to check the server side.
+- Leave a log file per running instance so that when the user says "look at the log" the AI can read it directly.
+- Build an automated test harness that runs the real engine and data headless.
+- After implementation, keep a separate review step that rereads the diff from the start (in the main session, `collaboration.md` "Sub-agents only when running in parallel"). Each round found a fair number of defects.
+- When testing with several windows, mark the role in the window title like `[HOST]`/`[GUEST]`. Once the user operated the wrong window and took it for a bug.
 
-## 오류 로그는 즉시, 중복 없이 기록한다
+## Write error logs immediately, without duplicates
 
-**상황**: 원래 프로그램의 로그는 종료할 때만 저장돼서 크래시가 나면 남지 않았고, 같은 오류가 수백 번 반복 기록됐습니다.
+**Situation**: The original program's log was saved only on exit, so nothing remained after a crash, and the same error was written hundreds of times.
 
-**규칙**: 오류가 발생하는 즉시 파일에 씁니다. 같은 오류는 횟수만 셉니다(10, 100, 1000회일 때 한 줄). 파일 개수와 크기에 상한을 둡니다(예: 최신 5개, 개당 5MB).
+**Rules**: Write to file the moment an error happens. Count repeats of the same error (one line at 10, 100, 1000). Cap file count and size (e.g. latest 5, 5 MB each).
 
-## 엉뚱한 오류는 환경변수 출처부터 확인한다
+## For a strange error, check where environment variables came from first
 
-**상황**: 작업과 무관한 도구가 "MSys/Mingw is not supported" 오류를 냈습니다. VS Code가 Git Bash 계열 셸에서 실행되면서 `MSYSTEM=MINGW64`를 물려받은 것이 원인이었습니다.
+**Situation**: An unrelated tool gave "MSys/Mingw is not supported". VS Code had been started from a Git Bash-type shell and inherited `MSYSTEM=MINGW64`.
 
-**규칙**: 설정 파일을 고치기 전에 프로세스가 어떤 환경변수를 물려받았는지부터 확인합니다. 이 경우 해결책은 VS Code를 시작 메뉴에서 다시 실행하는 것이었습니다.
+**Rules**: Before editing config files, check which environment variables the process inherited. Here the fix was relaunching VS Code from the Start menu.
 
-## 병렬 서브에이전트는 임시 파일을 분리한다
+## Parallel sub-agents use separate temp files
 
-**상황**: 병렬로 돌린 서브에이전트들이 같은 스크래치 폴더의 같은 파일명을 써서 서로 덮어썼습니다.
+**Situation**: Sub-agents running in parallel used the same file names in the same scratch folder and overwrote each other.
 
-**규칙**: 에이전트마다 하위 폴더나 고유한 파일명을 쓰게 지시합니다.
+**Rules**: Tell each agent to use its own subfolder or unique file names.
 
-## 테스트 결과는 다시 돌릴 수 있게 적는다
+## Write test results so they can be rerun
 
-**규칙**
-- 실행 명령, 실행 위치, 통과·실패 수, 실패한 테스트 이름, 그 테스트가 다루지 않는 범위를 적습니다.
-- 전체 테스트를 돌리지 않았으면 "전체 테스트 미실행"이라고 씁니다(관련 필터만 돌렸으면 그 필터 이름).
-- 실패를 고친 뒤에는 실패했던 테스트를 반드시 다시 돌립니다. 실패한 테스트를 지우거나 조건을 약하게 바꿔 통과시키는 것은 해결이 아닙니다.
+**Rules**
+- Write the command, where it ran, pass/fail counts, failing test names, and what the tests do not cover.
+- If the full suite was not run, write "full suite not run" (and the filter names if only related filters ran).
+- After fixing a failure, always rerun the failed test. Deleting a failing test or weakening its condition to pass is not a fix.
 
-## 회귀는 기능 경계와 상태 변화를 본다
+## For regressions, look at feature boundaries and state changes
 
-**규칙**
-- 새 기능 자체뿐 아니라 그 기능이 닿는 기존 흐름을 봅니다. 게임·멀티에서는 정상 진행 → 취소·실패 → 사망·종료 → 끊김·재접속 → 저장·불러오기 중 해당하는 경로를 검토합니다.
-- 상태를 바꾸는 코드는 요청 전 / 처리 중 / 성공 뒤 / 실패·취소 뒤를 나눠 테스트합니다.
-- 네트워크 메시지는 중복 수신, 늦게 온 메시지, 연결 끊김, 호스트·게스트 권한 차이를 생각합니다.
-- 버그 수정 테스트는 버그가 났던 조건을 적어도 하나 그대로 재현해야 합니다.
-- 이벤트가 플레이어 입력(선택 상자 등)을 기다리게 바꾸면, 그 이벤트를 끝까지 돌리는 기존 테스트(필터 테스트뿐 아니라 흐름·e2e 묶음)를 찾아 그 입력에 답하게 고칩니다. 안 그러면 다음 전체 실행에서 "이벤트가 아직 돈다"로 실패하고, 원인이 테스트 쪽인지 코드 쪽인지 따로 확인해야 합니다(FH2 0.6.0: 영혼 문구 대기 뒤 flows G-1·G-2). 고치기 전 코드(stash)에서도 같이 실패하는지 먼저 봅니다.
+**Rules**
+- Look not just at the new feature but at the existing flows it touches. In games/multiplayer, review whichever apply: normal progress → cancel/fail → death/quit → disconnect/reconnect → save/load.
+- Test state-changing code split into before request / in progress / after success / after failure or cancel.
+- For network messages, think about duplicate delivery, late messages, disconnects, and host vs guest authority.
+- A bug-fix test must reproduce at least one of the conditions under which the bug happened.
+- If an event is changed to wait for player input (a choice box etc.), find the existing tests that run that event to the end (not just filter tests but flow/e2e suites) and make them answer that input. Otherwise the next full run fails with "event still running", and you must separately work out whether the test or the code is at fault (FH2 0.6.0: flows G-1, G-2 after the soul text wait). First check whether it fails the same way on the code before the fix (stash).

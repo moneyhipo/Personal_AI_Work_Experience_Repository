@@ -1,65 +1,65 @@
-# 게임 모딩 공통
+# Game modding in general
 
-## 버그, 의도된 동작, 밸런스 변경을 엄격히 구분한다
+## Strictly separate bugs, intended behavior and balance changes
 
-**상황**: 버그 수정 목록 중 5건이 실제로는 원작 동작이었습니다. 위키를 잘못 읽고 버그로 적은 항목도 있었습니다. 다음 버전에서 빼거나 옵션으로 옮겨야 했습니다.
+**Situation**: 5 items on a bug-fix list were actually original behavior. Some came from misreading the wiki. They had to be removed or moved to options in the next version.
 
-**규칙**
-- "버그"라고 주장하려면 디컴파일 코드(또는 데이터)와 게임 내 텍스트를 함께 근거로 듭니다. 위키나 추측은 근거가 아닙니다.
-- 동작이 바뀌는 변경은 **기본값이 꺼진 옵션**으로 분리하고, 문구는 "버그 수정"이나 "원래 의도 복원"이 아니라 중립적으로 씁니다.
-- 릴리스 전에 수정 목록 전체를 코드와 다시 대조합니다.
+**Rules**
+- To claim "bug", cite both decompiled code (or data) and in-game text as evidence. The wiki or a guess is not evidence.
+- Changes that alter behavior go in **options that are off by default**, worded neutrally, not "bug fix" or "restoring the original intent".
+- Before release, check the whole fix list against the code again.
 
-## 코드보다 게임 데이터를 먼저 분석한다
+## Analyze game data before code
 
-**상황**: 전투 로직 대부분이 코드가 아니라 이벤트 데이터에 있었습니다(턴 종료 시점 페이지 1,227개, 변수로 턴을 직접 세는 적 AI, DB 대신 이벤트로 주는 보상 등).
+**Situation**: Most battle logic was in event data, not code (1,227 turn-end pages, enemy AI that counts turns with variables, rewards given by events instead of the DB, etc.).
 
-**규칙**: 설계 전에 게임 데이터 파일을 스크립트로 전수 집계해서 영향 범위를 숫자로 파악합니다. 분석은 서브에이전트로 병렬로 돌리고, 결과(ID, 위치, 규모)는 문서에 남깁니다.
+**Rules**: Before designing, count game data files exhaustively with a script to know the scope in numbers. Run analysis in parallel with sub-agents and record results (IDs, locations, scale) in docs.
 
-## 원작의 "중간 상태"를 확정 상태로 착각하지 않는다
+## Do not take the original's "in-between state" for a final state
 
-**상황**: 원작은 캐릭터 선택 화면에서 기본 캐릭터 스위치를 먼저 켜 둡니다. 모드가 이것을 보고 "그 캐릭터를 골랐다"고 잘못 판단했습니다.
+**Situation**: The original turns on the default character switch first on the character select screen. The mod saw it and wrongly decided "that character was chosen".
 
-**규칙**: 값 자체보다 **확정 시점**(선택 화면을 벗어날 때 등)을 기준으로 판정합니다.
+**Rules**: Judge by the **moment it is final** (e.g. leaving the select screen), not the value itself.
 
-## 화면 문구로 판정하지 않는다
+## Do not judge by on-screen text
 
-**상황**: 영어 문장으로 상황을 판정하던 코드가 한글패치 환경에서 깨졌습니다.
+**Situation**: Code that judged situations by English sentences broke under a Korean patch.
 
-**규칙**: 텍스트 매칭 대신 ID, 위치, 스위치 번호 같은 언어와 무관한 기준으로 판정합니다.
+**Rules**: Instead of text matching, judge by language-independent keys like IDs, positions, switch numbers.
 
-## 다른 모드와 충돌하지 않게 한다
+## Do not clash with other mods
 
-**규칙**
-- 수정은 하나씩 격리해서 적용합니다. 하나가 실패해도 나머지는 적용되게 하고, 결과를 `[OK]/[SKIP]/[FAIL]/[CONFLICT]`로 로그에 남깁니다.
-- 대상 함수는 리플렉션 등으로 찾고, 없으면 크래시 대신 SKIP 처리합니다. 게임이나 다른 모드 버전이 달라도 안전합니다.
-- 같은 함수를 다른 모드가 고치고 있으면 우리 수정을 빼는 식의 충돌 감지를 고려합니다. 단, 다른 로더나 다른 패치 라이브러리 버전을 쓰는 모드는 감지되지 않을 수 있으니 README에 명시합니다.
-- 키 바인딩은 쓰기 전에 원작과 다른 플러그인이 이미 쓰는 키인지 확인합니다.
+**Rules**
+- Apply each fix in isolation. If one fails the rest still apply; log results as `[OK]/[SKIP]/[FAIL]/[CONFLICT]`.
+- Find target functions by reflection etc.; if missing, SKIP instead of crashing. Safe even when the game or other mod versions differ.
+- Consider conflict detection such as dropping our fix when another mod patches the same function. Mods on another loader or another patch library version may not be detected; state that in the README.
+- Before binding a key, check that the original and other plugins don't already use it.
 
-## 싱글 게임을 멀티로 바꿀 때
+## Turning a single-player game multiplayer
 
-**상황**: "주인공은 한 명"이라는 전제가 곳곳에 박혀 있었습니다(캐릭터 분기 약 13,900개, 주인공 사망 즉시 게임오버 경로 48곳 이상, 패배 불가 전투 약 1,468개, 플레이어만 쫓는 적 AI, PC마다 기록되는 전역 해금 데이터).
+**Situation**: "There is one protagonist" was baked in everywhere (about 13,900 character branches, 48+ paths to instant game over on protagonist death, about 1,468 unlosable battles, enemy AI chasing only the player, global unlock data recorded per PC).
 
-**규칙**
-- 기획을 확정하기 전에 싱글 전제 지점을 전수 조사해 목록과 숫자로 보여 줍니다.
-- 랜덤 요소가 많은 게임은 lockstep이 어렵습니다. 호스트가 로직을 돌리고 게스트는 얇은 클라이언트로 두는 호스트 권한형이 현실적입니다.
-- 게스트가 화면만 비추면 빠지는 것들을 챙깁니다: 화면 밝기·색조, 날씨, 그림, BGM, 걷기 모션(위치만 순간이동시키면 "문워크"), 게스트 입력에 반응하는 원작 이벤트.
-- 큰 스냅샷은 압축합니다(예: LZString).
-- 전역 기록(해금 등)은 호스트에서만 씁니다.
-- 호스트 권한형 모드에 싱글 기준 버그픽스를 같이 쓰면, 그 패치가 호스트에서만 돌도록 `IsHost` 같은 조건으로 막아야 합니다.
-- 원본 멀티 모드와 섞이지 않는 독립 빌드를 만들 때는 버전 문자열, 패킷 ID(솔트), 어셈블리 이름을 바꿉니다.
-- 원작 명령을 멀티용으로 통째로 바꾸는 규칙(예: "게임 오버 → 그 플레이어 다운")을 만들 때는, 그 명령을 쓰는 곳을 데이터에서 전부 찾아 "정상 종료"로 쓰는 곳(엔딩 끝의 게임 오버 등)을 따로 뺍니다. 빼지 않으면 엔딩을 끝까지 본 뒤 모두가 멈춥니다(FH2 코옵, 2026-10-29).
+**Rules**
+- Before fixing the plan, survey every single-player assumption and show it as a list with numbers.
+- Games with lots of randomness are hard to lockstep. Host-authoritative (host runs logic, guests are thin clients) is realistic.
+- Cover what is lost when a guest only mirrors the screen: screen brightness/tint, weather, pictures, BGM, walking animation (teleporting only the position gives a "moonwalk"), original events reacting to guest input.
+- Compress large snapshots (e.g. LZString).
+- Write global records (unlocks etc.) only on the host.
+- When a host-authoritative mod is used with single-player bug fixes, guard those patches with a condition like `IsHost` so they run only on the host.
+- When making a standalone build that must not mix with the original multiplayer mod, change the version string, packet ID (salt) and assembly name.
+- When making a rule that replaces an original command wholesale for multiplayer (e.g. "game over → that player goes down"), find every use of that command in the data and exclude uses that mean "normal end" (game over at the end of an ending etc.). Otherwise everyone freezes after watching an ending (FH2 co-op, 2026-10-29).
 
-## 수정 후보마다 근거를 남기고, 한 번에 한 곳만 바꾼다
+## Keep evidence for each fix candidate; change one place at a time
 
-**규칙**
-- 후보마다 `재현 조건 / 코드·데이터 근거 / 원작 동작 / 기대 동작 / 바꿀 위치 / 회귀 위험 / 확인 방법`을 적습니다.
-- 원인을 확인하지 못한 상태에서 여러 곳을 동시에 바꾸지 않습니다. 먼저 로그나 최소 재현 테스트로 범위를 좁힙니다.
+**Rules**
+- For each candidate write `repro conditions / code-data evidence / original behavior / expected behavior / where to change / regression risk / how to check`.
+- Do not change several places at once while the cause is unconfirmed. Narrow it down first with logs or a minimal repro test.
 
-## 세이브·설정을 건드리기 전에 복구 수단부터 만든다
+## Before touching saves or settings, build a way to recover
 
-**상황**: Lobotomy 버그픽스에서 Harmony 패치가 세이브 로딩을 중단시켜 사용자 장비 세이브가 날아갔습니다([unity-mono-harmony.md](unity-mono-harmony.md)).
+**Situation**: In the Lobotomy bug fixes, a Harmony patch stopped save loading and the user's equipment save was lost ([unity-mono-harmony.md](unity-mono-harmony.md)).
 
-**규칙**
-- 세이브 형식이나 로드·세이브 경로를 건드리기 전에 사용자 세이브를 별도 사본으로 백업하고, 실험은 사본으로 합니다.
-- 옛 버전 세이브와 새 버전의 호환을 확인합니다.
-- 되돌리는 방법(백업 위치, 복구 순서)을 인수인계 문서에 적습니다.
+**Rules**
+- Before touching the save format or load/save paths, back up the user's saves as a separate copy and experiment on the copy.
+- Check compatibility of old-version saves with the new version.
+- Write the way back (backup location, restore steps) in the handover doc.

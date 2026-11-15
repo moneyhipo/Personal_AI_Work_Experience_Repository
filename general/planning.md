@@ -1,33 +1,33 @@
-# 기획과 문서 작성
+# Planning and writing docs
 
-## 기획 자료가 여러 개면 어긋나는 곳부터 대조한다
+## With several planning materials, compare where they disagree first
 
-**상황**: 한 프로젝트에 아이디어 문서(웹 MVP, 실시간 번역 제외), 추가 아이디어 메모(실시간 화면 번역, 자동 등록), UI 시안(모바일 앱), 이미 제출한 기획서 PDF가 있었습니다. 기획서 PDF 안에서도 본문은 안드로이드 앱인데 구조도·역할 분담·그림은 웹 기준이었고, 같은 기능이 한 곳에서는 "장기 확장", 다른 곳에서는 "필수"였습니다. 작업 도중 사용자가 PDF를 추가로 올려서 이미 정한 기술 스택 일부가 바뀌었습니다.
+**Situation**: One project had an idea doc (web MVP, no live translation), an extra idea memo (live screen translation, auto registration), UI mockups (mobile app), and an already-submitted plan PDF. Even inside the PDF, the body said Android app while the architecture diagram, role split and figures were web-based, and the same feature was "long-term extension" in one place and "required" in another. Mid-work the user uploaded another PDF, changing part of the tech stack already chosen.
 
-**규칙**
-- 기획 문서를 쓰기 전에 폴더 안 자료(git이 추적하지 않는 파일, PDF, 이미지 포함)를 전부 확인하고, 자료별 플랫폼·범위·필수 기능·기술 스택을 대조합니다.
-- 어긋나는 항목은 임의로 고르지 않고 선택지와 추천안을 붙여 질문합니다.
-- 이미 제출한 계획서가 있으면 그것을 기준선으로 둡니다. 바뀐 점은 `항목 | 기존 계획 | 현재 | 이유` 표로 진행 문서에 남깁니다. 수업·공모전 발표에서 그대로 설명할 수 있어야 합니다.
-- 제출 문서를 검토할 때는 모순, 양식이 요구했는데 빠진 항목, 제출 전에 지워야 할 안내문, 오타를 쪽 번호와 함께 나눠서 보고합니다.
+**Rules**
+- Before writing a planning doc, check every material in the folder (including files git does not track, PDFs, images) and compare platform, scope, required features and tech stack per material.
+- Do not pick disagreeing items yourself; ask with options and a recommendation.
+- If a plan was already submitted, treat it as the baseline. Record changes in the progress doc as a table `item | original plan | now | reason`. It must be explainable as-is in a class or contest presentation.
+- When reviewing a submission doc, report contradictions, items the template requires but are missing, guide text to delete before submitting, and typos, separately with page numbers.
 
-## 자동 수집 아이디어는 데이터 출처의 실제 필드부터 확인한다
+## For auto-collection ideas, first check the real fields of the data source
 
-**상황**: "카드 결제내역을 감지해서 산 옷을 옷장에 자동 등록하자"는 아이디어가 있었습니다.
+**Situation**: An idea: "detect card payment history and auto-register bought clothes in the closet".
 
-**원인**: 카드 결제내역에는 가맹점명, 금액, 일시만 있고 상품명·옵션·사진이 없습니다. 국내 카드 내역을 앱으로 가져오는 마이데이터 API는 허가받은 사업자만 쓸 수 있습니다.
+**Cause**: Card payment history only has merchant name, amount and time, no product name, options or photo. The MyData API that brings Korean card history into an app is only for licensed businesses.
 
-**규칙**: 자동 수집 기능은 출처마다 실제로 얻을 수 있는 필드와 접근 자격을 먼저 확인하고 사용자에게 알립니다. 필요한 정보가 있는 다른 출처를 대안으로 제시합니다(이 경우 주문내역 화면 캡처, 주문 완료 페이지, 영수증).
+**Rules**: For auto-collection features, first check per source which fields you can actually get and the access requirements, and tell the user. Offer other sources that have the needed info (here: order history screenshots, order confirmation pages, receipts).
 
-## 기능 문서는 종류별 하위 폴더로 나눈다
+## Split feature docs into subfolders by kind
 
-**상황**: 기능 문서 14개를 `docs/features/` 한 폴더에 만들었더니, 사용자가 종류별 하위 폴더로 나눠 보관하라고 했습니다.
+**Situation**: 14 feature docs were created in one `docs/features/` folder; the user asked to split them into subfolders by kind.
 
-**규칙**
-- 기능 문서가 여러 개 생기면 처음부터 `docs/features/<종류>/<기능>.md`로 나눕니다(예: `wardrobe/`, `translation/`, `release/`).
-- `docs/features/README.md`에 폴더별 문서 목록을 둡니다. 문서를 옮기면 상대 링크를 전부 고친 뒤, 끊어진 링크가 없는지 스크립트로 확인합니다.
+**Rules**
+- Once there are several feature docs, split from the start as `docs/features/<kind>/<feature>.md` (e.g. `wardrobe/`, `translation/`, `release/`).
+- Keep a per-folder doc list in `docs/features/README.md`. When moving docs, fix all relative links, then check with a script that no link is broken.
 
-## 마크다운 링크의 파일 이름에 괄호가 있으면 인코딩한다
+## Encode parentheses in file names inside Markdown links
 
-**상황**: `메인 화면(베이스).png`로 건 링크가 `)`에서 끊겨 깨졌습니다.
+**Situation**: A link to `메인 화면(베이스).png` broke at the `)`.
 
-**규칙**: 링크 주소의 공백은 `%20`, 괄호는 `%28`·`%29`로 씁니다. 문서를 다 쓰면 상대 링크가 실제 파일을 가리키는지 스크립트로 확인합니다.
+**Rules**: In link targets write spaces as `%20` and parentheses as `%28`/`%29`. When a doc is done, check with a script that relative links point at real files.

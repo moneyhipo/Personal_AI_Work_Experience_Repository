@@ -1,190 +1,192 @@
-# RPG Maker MV/MZ (NW.js) 플러그인 모드
+# RPG Maker MV/MZ (NW.js) plugin mods
 
-출처: Fear & Hunger 2: Termina ATB 전투 + 코옵 모드 (RPG Maker MV 1.6.0, NW.js 0.29, Node 9.7)
+Source: Fear & Hunger 2: Termina ATB battle + co-op mod (RPG Maker MV 1.6.0, NW.js 0.29, Node 9.7)
 
-## 엔진 버전부터 확인한다
+## Check the engine version first
 
-**규칙**
-- `www/js/rpg_core.js`가 있으면 MV, `rmmz_core.js`가 있으면 MZ입니다.
-- `package.json`과 nw.exe 버전으로 NW.js·Node 버전을 확인합니다. 오래된 Node(예: 9.x)에서는 최신 네이티브 모듈(steamworks.js 등)을 붙일 수 없습니다. 이 경우 별도 헬퍼 exe(C# 등)로 우회했습니다.
+**Rules**
+- `www/js/rpg_core.js` means MV; `rmmz_core.js` means MZ.
+- Check NW.js/Node versions from `package.json` and the nw.exe version. On an old Node (e.g. 9.x) modern native modules (steamworks.js etc.) cannot be attached. Here it was worked around with a separate helper exe (C# etc.).
 
-## 데이터 파일을 전수 분석한다
+## Analyze the data files exhaustively
 
-**규칙**: `www/data/*.json`(Troops, CommonEvents, Maps 등)을 Node 스크립트로 집계합니다. 전투·보상·AI 로직의 상당 부분이 이벤트 데이터에 있습니다. 이벤트 명령 코드(예: 129 파티 멤버 변경)로 검색하면 영향 범위를 숫자로 볼 수 있습니다.
+**Rules**: Tally `www/data/*.json` (Troops, CommonEvents, Maps, etc.) with Node scripts. Much of the battle, reward and AI logic is in event data. Searching by event command code (e.g. 129 change party member) shows the scope in numbers.
 
-## 턴제 → ATB 전환은 "전역 라운드 시계"로
+## Turn-based → ATB with a "global round clock"
 
-**상황**: 개인 게이지만 두면 "턴 종료" 시점 트룹 페이지, `increaseTurn`, 턴 단위 상태 지속 시간이 돌지 않습니다.
+**Situation**: With only personal gauges, "turn end" troop pages, `increaseTurn` and per-turn state durations do not run.
 
-**규칙**
-- 일정 틱마다 가상 턴 종료를 발생시키면 원작 데이터를 고치지 않고 그대로 쓸 수 있습니다.
-- 기존의 유사 ATB 플러그인(예: Galv_ExAgiTurn)은 끕니다.
-- YEP_BattleEngineCore의 tick 인터페이스, Olivia_OctoBattle의 OTB 구간을 참고 구현으로 쓸 수 있습니다.
+**Rules**
+- Raising a virtual turn end every N ticks lets the original data be used unchanged.
+- Turn off existing pseudo-ATB plugins (e.g. Galv_ExAgiTurn).
+- YEP_BattleEngineCore's tick interface and Olivia_OctoBattle's OTB section can serve as reference implementations.
 
-## 다부위 몬스터는 게이지 하나를 공유한다
+## Multi-part monsters share one gauge
 
-**상황**: 부위마다 게이지가 따로 돌아 적이 쉬지 않고 행동했습니다. 부위를 묶자 이번에는 부위끼리 서로를 불러내는 무한 루프가 생겼습니다.
+**Situation**: Each part ran its own gauge and the enemy acted nonstop. Grouping parts then caused an infinite loop of parts calling each other.
 
-**규칙**: 한 몬스터의 부위는 게이지 하나를 공유하고, 불려 나온 부위는 다른 부위를 다시 부르지 않습니다. 기본 AGI가 다른 부위는 묶지 않습니다.
+**Rules**: Parts of one monster share one gauge, and a called part does not call other parts again. Do not group parts with different base AGI.
 
-## 게이지 리셋 시점이 공정성을 결정한다
+## When the gauge resets decides fairness
 
-**상황**: 게이지를 "행동 연출이 끝난 뒤" 0으로 돌리자 연출이 긴 쪽(플레이어)이 약 25% 손해를 봤습니다.
+**Situation**: Resetting the gauge to 0 "after the action animation" cost the side with longer animations (the player) about 25%.
 
-**규칙**: 행동 시작 시 0으로 리셋하고, 연출 중에는 모든 게이지를 멈춥니다.
+**Rules**: Reset to 0 at action start, and freeze all gauges during animations.
 
-## F5 새로고침은 Node 상태를 남긴다 (유령 서버)
+## F5 reload keeps Node state (ghost server)
 
-**상황**: F5 뒤에도 옛 코드로 연 TCP 서버가 살아 있었습니다. 새 서버는 열리지 않았고(EADDRINUSE), 게스트는 옛 서버에 붙었습니다.
+**Situation**: After F5 the TCP server opened by the old code was still alive. The new server failed to open (EADDRINUSE) and guests connected to the old one.
 
-**원인**: F5는 화면과 게임 스크립트만 다시 불러오고 Node 쪽 객체는 유지합니다.
+**Cause**: F5 reloads only the page and game scripts; Node-side objects stay.
 
-**규칙**: 소켓과 서버는 `global.__xxx`에 보관하고, 플러그인이 시작될 때 이전 것을 찾아 닫습니다. 이 처리를 넣기 전에 생긴 유령은 프로세스를 완전히 종료해야 사라집니다. 사용자에게도 "F5로는 안 되고 창을 완전히 껐다 켜야 한다"고 안내합니다.
+**Rules**: Keep sockets and servers in `global.__xxx`, and when the plugin starts, find and close the previous ones. Ghosts created before this handling only go away by fully killing the process. Tell the user too: "F5 won't do it, fully close and reopen the window".
 
-## 키 입력
+## Key input
 
-- F5는 원작의 재시작 키입니다.
-- YEP_KeyboardConfig가 `Input.keyMapper`를 덮어씁니다. 모드 키는 `document`의 keydown에서 직접 처리합니다.
+- F5 is the original's restart key.
+- YEP_KeyboardConfig overwrites `Input.keyMapper`. Handle mod keys directly in a `document` keydown listener.
 
-## 한 PC에서 창 두 개로 테스트하기
+## Testing with two windows on one PC
 
-**상황**: Game.exe를 두 번 실행하면 NW.js가 기존 창으로 합쳐 버립니다.
+**Situation**: Running Game.exe twice makes NW.js merge into the existing window.
 
-**규칙**
-- `package.json`에 `"single-instance": false`를 넣습니다.
-- 두 번째 창은 `--user-data-dir=<별도 폴더>`로 띄웁니다.
-- Steam의 플레이 버튼은 중복 실행을 막으므로 exe를 직접 실행합니다.
-- 창 제목줄에 `[HOST]`/`[GUEST: 이름]`을 표시합니다.
+**Rules**
+- Put `"single-instance": false` in `package.json`.
+- Start the second window with `--user-data-dir=<separate folder>`.
+- Steam's Play button blocks duplicate runs, so run the exe directly.
+- Show `[HOST]`/`[GUEST: name]` in the title bar.
 
-## 설치는 plugins.js 대신 main.js 로더 방식으로
+## Install via a main.js loader instead of plugins.js
 
-**상황**: 한글패치가 `www/js/plugins.js`를 통째로 교체해서 모드 등록이 사라지고, 꺼 두었던 플러그인이 다시 켜졌습니다.
+**Situation**: A Korean patch replaced `www/js/plugins.js` wholesale; the mod registration vanished and plugins that had been turned off came back on.
 
-**규칙**: `www/js/main.js`에서 `$plugins`에 모드 항목을 덧붙이고, 필요 없는 플러그인을 끈 뒤 `PluginManager.setup`을 호출합니다. 설치는 압축을 풀어 덮어쓰기만 하면 되고, 삭제는 `main.js.original`로 되돌립니다.
+**Rules**: In `www/js/main.js`, append mod entries to `$plugins`, turn off unneeded plugins, then call `PluginManager.setup`. Installing is just unzip-and-overwrite; uninstalling restores `main.js.original`.
 
-## 코옵 동기화 세부 사항
+## Co-op sync details
 
-- 스냅샷은 `DataManager.makeSaveContents`로 만들고, 이후 델타를 초당 10회 정도 보냅니다. 최대 1.8MB까지 커져서 LZString으로 압축했습니다.
-- New Game에는 저장된 BGM이 없어서 `playBgm(null)` 크래시가 났습니다. 호스트가 지금 재생 중인 BGM을 보냅니다.
-- 원작 달리기는 이벤트가 Shift를 감지하는 방식이라 게스트에게는 동작하지 않습니다.
-- 맵 전환 중 1프레임 동안 이벤트 원본이 없어서 YEP_SaveEventLocations가 크래시했습니다. 데이터 없는 이벤트는 건너뛰고, 게스트에게 필요 없는 원작 기능은 게스트 쪽에서 끕니다.
-- YEP_EventChasePlayer 같은 추적 AI는 `$gamePlayer`만 쫓습니다. 멀티에서는 대상 선택을 바꿔야 합니다.
+- Build snapshots with `DataManager.makeSaveContents`, then send deltas about 10 times a second. They grew up to 1.8 MB, so they were compressed with LZString.
+- New Game has no saved BGM, causing a `playBgm(null)` crash. The host sends the BGM currently playing.
+- The original's running works by an event detecting Shift, so it does not work for guests.
+- During a map transfer the event source is missing for 1 frame and YEP_SaveEventLocations crashed. Skip events without data, and turn off on the guest side original features the guest does not need.
+- Chase AI like YEP_EventChasePlayer chases only `$gamePlayer`. In multiplayer the target selection has to change.
 
-### 멀티에서 "다른 PC가 더 빠르다"는 값 로그로 잡는다
-**상황**: FH2 코옵에서 게스트 이동이 빠르다는 제보가 버전 세 개 동안 해결되지 않았습니다. 코드를 읽고 "엔진 대시(+1)는 항상 켜져 있다"고 가정한 채 고쳤기 때문입니다.
-**원인**: 원작은 플러그인 명령(YEP_DashToggle `DisableDashing`)으로 대시를 꺼 두고 있었습니다. 게스트 쪽 대체 코드는 이 설정을 보지 않았습니다.
-**규칙**: 두 PC의 실제 값(`realMoveSpeed`)을 로그에 남기고, 같은 캐릭터가 원작 코드로 돌 때(튜토리얼 솔로)와 모드 코드로 돌 때를 비교합니다. 원작 동작을 대신하는 코드를 쓸 때는 그 동작을 바꾸는 플러그인(`isDashDisabled` 같은 훅)을 먼저 grep으로 찾습니다.
+### In multiplayer, catch "the other PC is faster" with value logs
+**Situation**: In FH2 co-op a report that guests moved faster went unsolved for three versions, because fixes assumed from reading code that "the engine dash (+1) is always on".
+**Cause**: The original had dashing turned off by a plugin command (YEP_DashToggle `DisableDashing`). The guest-side replacement code did not look at this setting.
+**Rules**: Log the real value (`realMoveSpeed`) on both PCs, and compare the same character running on original code (tutorial solo) vs on mod code. When writing code that replaces an original behavior, first grep for plugins that change that behavior (hooks like `isDashDisabled`).
 
-### 프로토타입 훅은 메서드가 정의된 클래스에 건다
-**상황**: FH2 코옵 결투에서 "팔다리를 맞으면 몸통도 깎인다, 팔다리는 회복 안 된다, 몸통·머리가 부서지면 몸 전체가 쓰러진다"는 규칙이 몇 버전 동안 한 번도 동작하지 않았습니다. 테스트도 통과했습니다.
-**원인**: 훅을 `Game_BattlerBase.prototype.gainHp`에 걸었는데, MV의 `gainHp`는 `Game_Battler.prototype`에만 있습니다. 하위 클래스 정의가 먼저 찾아지므로 훅은 호출되지 않았고, 원래 함수 변수는 `undefined`였습니다. 테스트는 결과값(몸통 HP)을 확인하지 않았습니다.
-**규칙**: 훅을 걸기 전에 `grep -n "prototype.<메서드> = " rpg_objects.js plugins/*.js`로 그 메서드를 실제로 정의한 클래스를 찾습니다. 래퍼가 원래 함수를 저장할 때 `undefined`면 오류를 내게 하거나, 그 훅의 효과(값 변화)를 검증하는 테스트를 하나 둡니다.
+### Put prototype hooks on the class that defines the method
+**Situation**: In FH2 co-op duels, the rules "limb hits also cut the body, limbs don't heal, body/head broken = whole body falls" never worked for several versions. Tests passed too.
+**Cause**: The hook was on `Game_BattlerBase.prototype.gainHp`, but MV's `gainHp` exists only on `Game_Battler.prototype`. The subclass definition is found first, so the hook was never called, and the saved original function variable was `undefined`. Tests did not check the result value (body HP).
+**Rules**: Before hooking, find the class that really defines the method with `grep -n "prototype.<method> = " rpg_objects.js plugins/*.js`. Make the wrapper throw if the saved original is `undefined`, or keep one test that checks the hook's effect (value change).
 
-### 원인·판정용 기록은 덮어쓸 때 객체를 새로 만든다
-**상황**: FH2 코옵에서 버려진 집 지하실 문이 호스트·게스트 모두에게 안 열렸습니다. 게스트가 혼자 돌다 온 뒤부터였고, 호스트가 맵을 떠나면 풀렸습니다.
-**원인**: "이 스위치를 마지막으로 쓴 사람"을 남기는 기록이 있었습니다. 새로 쓸 때 기존 객체의 id·시각만 고쳐서, 예전 쓰기에 붙은 `own: true`(그 게스트 PC가 이미 장면을 돌렸다) 표시가 다음 쓰기에 그대로 따라왔습니다. 판정에 기한도 없어서 문의 자동실행 페이지가 매 프레임 건너뛰어졌습니다.
-**규칙**: 판정에 쓰는 표시는 쓸 때마다 객체를 통째로 갈아 끼웁니다(`rec = { id, at }`). 표시를 오래 유지해야 하면 기한을 두고, 불러오기·타이틀 복귀 때 비웁니다.
+### Rebuild the object when overwriting records used for causes/judgement
+**Situation**: In FH2 co-op the abandoned house basement door would not open for host or guests. It started after a guest roamed alone, and cleared when the host left the map.
+**Cause**: There was a record of "who last wrote this switch". On a new write only the id and time of the existing object were changed, so an `own: true` mark (that guest PC already ran the scene) from an old write carried into the next. The judgement had no expiry either, so the door's autorun page was skipped every frame.
+**Rules**: Replace marks used for judgement with a whole new object on every write (`rec = { id, at }`). If a mark must live long, give it an expiry and clear it on load and on return to title.
 
-### 시간은 `Graphics.frameCount`가 아니라 실제 시계로 잰다
-**상황**: FH2 코옵의 "다운 60초"가 순식간에 끝났습니다.
-**원인**: MV의 `Graphics.frameCount`는 화면을 그린 횟수입니다. 게임 로직은 60Hz로 고정되어 도는데, 144Hz 모니터에서는 frameCount가 약 2.4배 빨리 늘어납니다.
-**규칙**: 플레이어에게 초로 보여 주는 시간과 타임아웃은 `performance.now()`로 잽니다. 다른 PC로 보낼 때는 절대 시각 대신 남은 밀리초를 보냅니다(PC마다 시계가 다름).
+### Measure time with the real clock, not `Graphics.frameCount`
+**Situation**: FH2 co-op's "down for 60 seconds" ended in an instant.
+**Cause**: MV's `Graphics.frameCount` counts drawn frames. Game logic runs fixed at 60 Hz, but on a 144 Hz monitor frameCount grows about 2.4× faster.
+**Rules**: Measure times shown to players in seconds, and timeouts, with `performance.now()`. When sending to another PC, send remaining milliseconds, not absolute time (clocks differ per PC).
 
-### MV는 데미지를 상태 효과보다 먼저 적용한다
-**상황**: FH2 코옵에서 "참수 = 즉사"를 상태 31(Headless)로 판정했는데, 참수 스킬로 죽어도 일반 다운이 됐습니다.
-**원인**: `Game_Action.apply`는 데미지를 먼저 넣고 상태 효과를 나중에 적용합니다. 그 타격으로 죽으면 대상이 죽은 상태라 상태가 붙지 않습니다.
-**규칙**: "어떤 공격으로 죽었나"는 상태가 아니라 행동(스킬 ID)으로 판정하거나, `apply` 래퍼에서 맞기 전후를 비교합니다.
+### MV applies damage before state effects
+**Situation**: FH2 co-op judged "decapitation = instant death" by state 31 (Headless), but dying from a decapitation skill still gave a normal down.
+**Cause**: `Game_Action.apply` applies damage first and state effects later. If the hit kills, the target is dead and the state is not added.
+**Rules**: Judge "what attack killed it" by the action (skill ID), not the state, or compare before/after in an `apply` wrapper.
 
-### YEP 전투에서는 "HP 0 = 사망"이 행동이 끝날 때 일어난다
-**상황**: FH2 코옵 결투에서 다리를 다 잘라도 머리 잠금이 안 풀렸습니다. 테스트는 통과했습니다.
-**원인**: YEP_BattleEngineCore의 기본 액션 시퀀스는 행동 시작 때 대상에게 `IMMORTAL: true`를 걸고 끝날 때 푼다. 그동안은 HP가 0이 되어도 사망 상태가 막힌다. "죽었으면 X" 로직을 `gainHp` 시점의 `isDead()`로 판정해서 매번 건너뛰었다. 테스트는 `action.apply()`를 직접 불러 IMMORTAL을 거치지 않았다.
-**규칙**: 사망에 반응하는 로직은 `refresh`나 사망 상태가 실제로 붙는 시점에 건다(또는 HP 0 이하를 함께 본다). 전투 테스트는 `BattleManager` 흐름(액션 시퀀스 포함)으로 돌린다. YEP `_damagePopup`은 스프라이트가 처음 볼 때까지 `false`일 수 있으니 직접 push하는 경로에서는 배열을 보장한다.
+### In YEP battles "HP 0 = death" happens when the action ends
+**Situation**: In FH2 co-op duels, cutting off every leg did not release the head lock. Tests passed.
+**Cause**: YEP_BattleEngineCore's default action sequence sets `IMMORTAL: true` on the target at action start and removes it at the end. Meanwhile HP can reach 0 without the death state. The "if dead then X" logic judged by `isDead()` at `gainHp` time and was skipped every time. Tests called `action.apply()` directly, bypassing IMMORTAL.
+**Rules**: Hang death-reacting logic on `refresh` or where the death state is actually added (or also check HP ≤ 0). Run battle tests through the `BattleManager` flow (including action sequences). YEP `_damagePopup` can be `false` until the sprite first reads it, so guarantee the array on paths that push directly.
 
-### 닫힌 선택지 창을 activate()하면 메시지 입력이 영원히 막힌다
-**상황**: FH2 코옵에서 호스트가 대사 창에서 OK를 눌러도 넘어가지 않고 굳었습니다.
-**원인**: 공유 대화 동기화 코드가 선택지가 없는 대사에서도 선택지 창(Window_ChoiceList)을 `activate()`했다. MV의 `Window_Message`는 하위 창이 활성이면 OK 입력을 무시한다. 테스트는 메시지 창 없이 돌아서 잡지 못했다.
-**규칙**: 하위 입력 창(선택지·숫자·아이템)은 `$gameMessage`가 그 입력을 실제로 요청하고 창이 열려 있을 때만 활성화한다. 메시지 흐름 테스트는 실제 `Window_Message`와 하위 창을 만들어서 돌린다.
+### activate() on a closed choice window blocks message input forever
+**Situation**: In FH2 co-op the host pressed OK on a dialogue window and it froze without advancing.
+**Cause**: Shared dialogue sync code called `activate()` on the choice window (Window_ChoiceList) even for lines with no choices. MV's `Window_Message` ignores OK while a child window is active. Tests ran without a message window and missed it.
+**Rules**: Activate child input windows (choice, number, item) only when `$gameMessage` actually requests that input and the window is open. Run message flow tests with a real `Window_Message` and child windows.
 
-### 헤드리스 테스트에서 `SceneManager.push`를 빈 함수로 막으면 전투를 기다리지 않는다
-**상황**: FH2 코옵에서 "전투에 지면 장면 되돌리기"를 테스트했는데, 인터프리터가 전투(301) 다음 명령까지 그대로 실행해서 승리로 판정됐습니다.
-**원인**: MV의 `Game_Interpreter`는 `SceneManager.isSceneChanging()`(= `_nextScene`이 있음)으로 전투 장면 전환을 기다린다. 하네스가 `push`를 빈 함수로 바꾸면 `_nextScene`이 안 생겨서 기다리지 않는다.
-**규칙**: 전투·장면 전환을 거치는 이벤트를 헤드리스로 돌릴 때는 `push`가 `_nextScene`을 세우게 하고, 전투 결과(승·패·도주)는 테스트가 직접 넣은 뒤 `_nextScene`을 비운다.
+### Stubbing `SceneManager.push` in headless tests stops waiting for battles
+**Situation**: In FH2 co-op a test of "undo the scene on battle loss" had the interpreter run straight past the battle (301) to the next command and judged it a win.
+**Cause**: MV's `Game_Interpreter` waits for the battle scene change via `SceneManager.isSceneChanging()` (= `_nextScene` set). If the harness stubs `push` to do nothing, `_nextScene` never appears and it does not wait.
+**Rules**: When running events that go through battles/scene changes headless, make `push` set `_nextScene`, have the test put in the battle result (win/lose/escape) itself, then clear `_nextScene`.
 
-### 타이틀에서 여는 Load·Options 화면도 `Scene_MenuBase`다
-**상황**: FH2 코옵에서 모두 쓰러져 게임 오버가 난 뒤, 호스트가 타이틀에서 Load 화면을 열자 지난 판의 세계가 다시 돌았습니다. 남아 있던 적이 게스트에게 닿아, 타이틀에 있던 게스트 화면에 전투가 떴습니다.
-**원인**: "메뉴를 연 동안에도 배경에서 세계를 돌린다"는 코드가 `SceneManager._scene instanceof Scene_MenuBase`만 봤다. 타이틀의 Load·Options 화면도 같은 클래스를 상속한다. 게임 오버 뒤에도 세션 상태(연결, 전투, 맵)가 메모리에 남아 있었다.
-**규칙**: 배경 루프는 장면 상속만 보지 말고 "지금 게임 중" 플래그와 장면 스택(Scene_Title이 있는지)으로 막는다. 게임 오버·타이틀로 갈 때 세션의 게임 상태를 명시적으로 끝낸다.
+### Load/Options opened from the title are also `Scene_MenuBase`
+**Situation**: In FH2 co-op, after a game over from everyone falling, the host opened Load from the title and the previous run's world started running again. A leftover enemy touched a guest and a battle appeared on the guest's screen, which was on the title.
+**Cause**: The code "keep running the world in the background while a menu is open" only checked `SceneManager._scene instanceof Scene_MenuBase`. The title's Load/Options screens inherit the same class. Session state (connection, battle, map) stayed in memory after game over.
+**Rules**: Gate background loops not just by scene inheritance but by an "in game now" flag and the scene stack (is Scene_Title in it). Explicitly end the session's game state on game over and going to title.
 
-### "원작에 이 기능이 없다"는 그 기능을 부르는 곳을 전부 찾은 뒤에 말한다
-**상황**: FH2 코옵에서 Codex가 문스코치 오사(Map080 EV82)의 페이지만 보고 "원작에 필드 공격이 없다"고 정리했고, 사용자가 그 말을 믿고 기능을 빼려 했습니다. 실제로는 같은 맵의 다른 이벤트들이 공격을 처리했습니다. 시야 바닥 칸이 SW3772를 켜고, 병렬 이벤트가 애니메이션 뒤 SW3775를 켜면, 자동 실행 페이지가 CE420을 부르는 구조였습니다.
-**규칙**: RPG Maker 기능은 적 이벤트 한 곳이 아니라 스위치·공통 이벤트 사슬로 흩어져 있다. 없다고 결론 내기 전에 관련 공통 이벤트(이름 검색)를 찾고, 그것을 부르는 곳(117, 이동 경로의 스크립트)과 그 조건 스위치를 켜는 곳(121)을 모든 맵에서 검색한다.
+### Say "the original has no such feature" only after finding every place that calls it
+**Situation**: In FH2 co-op, Codex looked only at the Moonscorch Osa (Map080 EV82) pages and concluded "the original has no field attack"; the user believed it and was about to drop the feature. Actually other events on the same map handled the attack: sight floor tiles turn on SW3772, a parallel event turns on SW3775 after an animation, and an autorun page calls CE420.
+**Rules**: RPG Maker features are spread across switch/common event chains, not one enemy event. Before concluding something is missing, find related common events (search by name), and search every map for where they are called (117, scripts in move routes) and where their condition switches are turned on (121).
 
-### "플레이어별 값"은 스위치만이 아니다: 원작 플러그인이 실제로 읽는 곳부터 본다
-**상황**: FH2 코옵에서 "아벨라가 튜토리얼에서 무기 제작을 골랐는데 제작 창에 무기 목록이 없다"는 제보가 왔다. 처음에는 히스토리 선택이 켜는 스위치(SW1551)와 스킬(372)을 의심했다.
-**원인**: 제작 창(YEP_ItemSynthesis)은 스위치도 스킬도 보지 않았다. 그 PC의 가방에 설계도 아이템(248)이 있는지만 봤다. 또 "만든 적 있는 것" 기록은 `$gameSystem._synthedWeapons`에 있어서, 게스트 PC에서는 호스트 스냅샷이 올 때마다 호스트 것으로 덮였다.
-**규칙**: 멀티 개조에서 "플레이어별 값"을 정할 때 스위치·변수만 보지 않는다. 그 기능을 그리는 원작 플러그인의 코드(창의 목록 함수 등)를 열어, 무엇을 읽는지(가방, 장비, `$gameSystem`의 기록, 노트 태그) 먼저 확인한다. 데이터에서 후보를 뽑는 감사 스크립트를 만들고, 모드의 현재 분류와 자동으로 대조한다.
+### "Per-player values" are not only switches: first look at what the original plugin really reads
+**Situation**: In FH2 co-op a report came: "Abella chose weapon crafting in the tutorial but the crafting window has no weapons". At first the switch (SW1551) and skill (372) set by the history choice were suspected.
+**Cause**: The crafting window (YEP_ItemSynthesis) looked at neither switch nor skill. It only checked whether that PC's bag had the blueprint item (248). Also the "already made" record lived in `$gameSystem._synthedWeapons`, so on guest PCs it was overwritten by the host's every time a host snapshot arrived.
+**Rules**: When deciding "per-player values" in a multiplayer conversion, do not look only at switches and variables. Open the original plugin code that draws the feature (the window's list function etc.) and first check what it reads (bag, equipment, `$gameSystem` records, note tags). Build an audit script that pulls candidates from data and compares them automatically with the mod's current classification.
 
-### Steamworks.NET 헬퍼를 네이티브 AOT로 빌드하면 콜백 구조체를 이름으로 불러 둬야 한다
-**상황**: FH2 코옵의 스팀 헬퍼(.NET 압축 단일 파일)가 바이러스토탈에서 2개 엔진(Bkav, VirIT)에 걸렸다. 압축을 끄면 1개, 네이티브 AOT로 빌드하면 0개였다. 그런데 AOT 빌드는 스팀 이름·친구 목록은 되는데 로비 생성 응답(CallResult)이 오지 않았다.
-**원인**: Steamworks.NET은 콜백·CallResult 데이터를 `Marshal.PtrToStructure(IntPtr, Type)`로 읽는다. 네이티브 AOT는 코드에서 쓰는 걸 본 구조체에만 마샬링 코드를 만든다. 빌드 경고 IL3053이 그 신호였다.
-**규칙**: 실행되지 않는 함수 안에서 쓰는 모든 콜백 구조체를 `Marshal.PtrToStructure<T>(IntPtr.Zero)`로 한 번씩 부르고, 그 함수를 Main에서 호출한다(조건으로 실제 실행은 막음). 바뀐 뒤에는 실제 스팀으로 이름 받기·로비 생성·로비 입장을 시험한다. 헬퍼 두 개를 띄워 같은 계정으로도 입장까지는 확인할 수 있다. 접속 요청·메시지는 다른 계정이 필요하다. 또 넥서스는 exe가 들어 있으면 탐지 0개여도 일단 격리한다. 공개 소스 저장소와 빌드 방법을 exe와 같이 갱신해 둔다.
+### A Steamworks.NET helper built with native AOT must touch callback structs by name
+**Situation**: FH2 co-op's Steam helper (.NET compressed single file) was flagged by 2 engines (Bkav, VirIT) on VirusTotal. Without compression 1, built with native AOT 0. But the AOT build got Steam names and friend lists while the lobby creation reply (CallResult) never arrived.
+**Cause**: Steamworks.NET reads callback/CallResult data with `Marshal.PtrToStructure(IntPtr, Type)`. Native AOT generates marshalling code only for structs it sees used in code. Build warning IL3053 was the signal.
+**Rules**: In a function that never really runs, call `Marshal.PtrToStructure<T>(IntPtr.Zero)` once for every callback struct, and call that function from Main (actual execution blocked by a condition). After changing, test on real Steam: getting names, creating a lobby, joining a lobby. Two helpers on the same account can check up to joining; connection requests and messages need another account. Also, Nexus quarantines any upload containing an exe even with 0 detections. Keep the public source repository and build instructions updated alongside the exe.
 
-### 원작의 매 프레임 낭비를 없애면 거기 기대던 코드가 드러난다
-**상황**: FH2 코옵 렉 줄이기. (1) 원작 병렬 이벤트가 같은 값을 계속 써서 `onChange` → 맵 전체 refresh가 매 프레임 돌았다. (2) 이벤트를 갱신할 때 가장 가까운 게스트 자리의 가짜 `$gamePlayer`(대역)를 쓰는 조건이 YEP "See Player"(설정으로 모든 이벤트에 켜짐) 때문에 모든 이벤트에 걸렸다. 둘 다 좁히자 프레임이 1/3이 됐지만, 대역을 좁힌 쪽에서 문리스 짐승 되돌리기 테스트가 깨졌다.
-**원인**: 자동 실행 페이지는 갱신 중에 `start()`되고, 시작 래퍼 여러 개가 `$gamePlayer._fhRemoteId`(대역인지)로 누구의 시작인지 정했다. "See Player"는 플레이어를 읽지 않지만 대역은 그 부수 효과로 이 판정에 쓰이고 있었다.
-**규칙**: 매 프레임 도는 낭비(같은 값 refresh, 넓은 대역)를 없앨 때는 (a) 그 경로가 만드는 부수 효과를 읽는 곳을 grep으로 전부 찾고(`_fhRemoteId`, `_needsRefresh`, `_data` 직접 쓰기 뒤 refresh 없음), (b) 낭비에 기대던 곳은 낭비를 되살리지 말고 그 자리에서 명시적으로 요청한다(`requestRefresh`), (c) 예외로 남길 곳(모드 상태를 읽는 페이지가 있는 맵)은 목록으로 둔다. 전체 테스트를 고친 항목마다 돌려 어느 수정이 깼는지 가린다(수정을 하나씩 껐다 켜서 확인). 세이브를 불러온 뒤의 인터프리터 `_list`는 데이터 목록의 사본이라 "같은 객체" 비교만으로는 줄지 않는다 - 내용 비교를 덧붙이고 실제 세이브로 잰다.
+### Removing the original's per-frame waste exposes code that relied on it
+**Situation**: FH2 co-op lag reduction. (1) Original parallel events kept writing the same value, so `onChange` → full map refresh ran every frame. (2) The condition for using the nearest guest's fake `$gamePlayer` (stand-in) when updating events matched every event because of YEP "See Player" (enabled on all events by settings). Narrowing both cut frame time to 1/3, but narrowing the stand-in broke the doorless beast undo test.
+**Cause**: Autorun pages `start()` during update, and several start wrappers decided whose start it was from `$gamePlayer._fhRemoteId` (is it a stand-in). "See Player" doesn't read the player, but the stand-in was used for this judgement as a side effect.
+**Rules**: When removing per-frame waste (refreshing the same value, wide stand-ins): (a) grep every place that reads the side effects that path creates (`_fhRemoteId`, `_needsRefresh`, direct `_data` writes with no refresh after); (b) where something relied on the waste, do not bring the waste back; request it explicitly there (`requestRefresh`); (c) keep a list of exceptions (maps with pages that read mod state). Run the full tests per change to tell which fix broke what (toggle fixes one at a time). After loading a save the interpreter `_list` is a copy of the data list, so a "same object" comparison alone doesn't shrink it; add a content comparison and measure with a real save.
 
-### 여러 PC 흐름 테스트는 "프레임 전체 + 실제 장면 전환"으로 돌린다
-**상황**: FH2 코옵에서 함수 하나씩 부르는 테스트 3000개가 모두 통과했는데, 여러 PC가 프레임 단위로 이어서 도는 흐름 테스트(끊김 → 재접속, 꿈 도중 끊김, 재접속 메시지가 한 번에 도착)를 처음 만들자 진짜 버그 3개가 바로 나왔다(꿈 맵에 혼자 다시 들어가 날짜 두 번, 재접속 자리에 그림 이름 없음 → 다른 PC 소켓 처리기 예외, 타이틀에서 영원히 대기).
-**원인**: 기존 테스트는 처리기를 직접 부르고 장면 전환은 기록만 해서, "어느 장면에서 어떤 메시지를 언제 받는가"가 빠져 있었다.
-**규칙**
-- 헤드리스 하네스에서도 그림 없는 장면(`Object.create(Scene_Map.prototype)` + 스프라이트·창 대역)의 실제 `update()`를 매 프레임 돌린다. 모드의 프레임 훅이 전부 돈다.
-- `SceneManager.goto`를 통째로 바꾸지 않는다(모드가 감싼 게임 오버·재시도 래퍼를 건너뛴다). 엔진의 goto가 만든 `_nextScene`을 **다음 프레임 시작**에 올린다(MV는 `changeScene` → `updateScene` 순서. 끝에 올리면 끊긴 PC의 전투 장면이 한 프레임 더 돌아 엉뚱한 오류).
-- 부팅 때 한 번만 일어나는 일(예: HIME_PreTitleEvents의 첫 타이틀 = 새 게임 맵)은 "이미 일어남"으로 둔다.
-- 끊김은 양쪽이 닫힘을 보게(호스트 close 처리기 + 게스트 leave), 재접속은 hello부터 진짜로. 메시지를 모았다가 한 번에 보내는 도구(`hold/release`)로 "큰 스냅샷 뒤 메시지가 같은 읽기에 온다"를 재현한다.
-- 버린 vm 컨텍스트는 V8이 늦게 풀어 수 GB까지 오른다. 테스트마다 강제 GC(`v8.setFlagsFromString('--expose-gc')` + `vm.runInNewContext('gc')`)를 몇 번 돌린다.
-- 테스트가 모드 버그를 찾으면 고치지 말고 "알려진 버그" 표시로 남겨 묶음은 통과시키고, 보고서에 재현·위치·고칠 방법을 적는다(고치면 "이제 통과"가 뜨게).
+### Run multi-PC flow tests as "whole frames + real scene changes"
+**Situation**: In FH2 co-op, 3000 tests calling one function each all passed, but the first flow tests where several PCs run frame by frame in turn (disconnect → reconnect, disconnect mid-dream, reconnect messages arriving at once) immediately found 3 real bugs (re-entering the dream map alone and the day passing twice, no picture name at the reconnect slot → exception in another PC's socket handler, waiting forever at the title).
+**Cause**: Existing tests called handlers directly and only recorded scene changes, so "which scene receives which message when" was missing.
+**Rules**
+- Even in a headless harness, run the real `update()` of a picture-less scene (`Object.create(Scene_Map.prototype)` + sprite/window stand-ins) every frame. All the mod's frame hooks run.
+- Do not replace `SceneManager.goto` wholesale (it skips the game over/retry wrappers the mod wraps around it). Promote the `_nextScene` created by the engine's goto **at the start of the next frame** (MV order is `changeScene` → `updateScene`; promoting at the end lets a disconnected PC's battle scene run one more frame and throw odd errors).
+- Treat things that happen only once at boot (e.g. HIME_PreTitleEvents' first title = new game map) as "already happened".
+- For disconnects make both sides see the close (host close handler + guest leave); for reconnects go for real from hello. Reproduce "messages after a big snapshot arrive in the same read" with a tool that holds messages and sends them at once (`hold/release`).
+- V8 frees discarded vm contexts late and memory climbs to several GB. Run forced GC a few times per test (`v8.setFlagsFromString('--expose-gc')` + `vm.runInNewContext('gc')`).
+- When a test finds a mod bug, do not fix it on the spot; leave a "known bug" mark so the suite passes, and write repro, location and fix plan in the report (once fixed, "now passes" shows).
 
-### 원작 연출을 흉내 내지 말고 원작 이벤트 데이터를 읽어 다시 쓴다
-**상황**: FH2 코옵의 배신 토너먼트 시작 연출을 모드가 따로 만들었다(문 앞 한 줄, 어둡게 + 발밑 빛, 다른 심장박동). 포즈 값은 원작 자리 이벤트에서 손으로 옮겨 적었다. 사용자가 "원작 탑 컷신(Map111 EV617)을 그대로 쓰자"고 해서 바꿨다(2026-11-03).
-**원인**: 원작에 같은 장면(동료가 문스코치가 되는 장면)이 이미 있었는데, 그 장면을 쓰지 않고 비슷하게 새로 만들었다.
-**규칙**: 비슷한 원작 장면이 있으면 먼저 찾는다. 위치·방향·그림은 그 이벤트 페이지에서 실행 중에 읽는다(예: "IF 파티에 X → 스위치 S" 명령에서 S를 첫 페이지 조건으로 쓰는 이벤트 = X의 자리). 공통 이벤트는 목록을 복사한 뒤 필요 없는 갈래만 바꿔서(예: 세계 변수 분기를 스크립트 조건 `false`로) 로컬 인터프리터로 돌린다. 세계 값(변수)을 연출용으로 바꾸지 않는다. 헤드리스 하네스에서는 FilterController가 두 번째 `createFilter`에서 넘어지므로, 테스트에서는 필터 명령을 기록만 하게 한다.
+### Do not imitate original staging; read the original event data and reuse it
+**Situation**: FH2 co-op's betrayal tournament opening was built separately by the mod (one line in front of the door, darken + light at feet, a different heartbeat). Pose values were copied by hand from original seat events. The user said "use the original tower cutscene (Map111 EV617) as is" and it was changed (2026-11-03).
+**Cause**: The original already had the same scene (companions turning Moonscorch), but a look-alike was built instead.
+**Rules**: If a similar original scene exists, find it first. Read positions, directions and pictures from that event page at runtime (e.g. an event whose first page condition is switch S, where S comes from an "IF X in party → switch S" command = X's seat). For common events, copy the list, change only unwanted branches (e.g. a world-variable branch into script condition `false`) and run it in a local interpreter. Do not change world values (variables) for staging. In the headless harness FilterController falls over on the second `createFilter`, so tests make filter commands record only.
 
-### 상태를 잠시 바꿔 돌리는 처리 안에서 다른 기능을 부르지 않는다
-**상황**: FH2 코옵에서 "보스 전투가 시작되면 같은 방의 플레이어를 끌어넣기"를 호스트의 월드 처리(`worldExtras`)에 걸었다. 단위 테스트는 모두 통과했지만, 실제 전투 화면을 도는 흐름 테스트에서 호스트가 직접 싸울 때 끌려온 게스트가 전투에 들어가지 못했다(2026-11-03).
-**원인**: 호스트가 전투 중일 때 월드를 돌리는 배경 처리는 그동안 `$gameParty._inBattle`을 거짓으로 바꿔 둔다. 그 안에서 난입을 요청하자 호스트가 자기에게 보낸 난입 처리가 "전투가 아직 열리는 중"으로 보고 대기열에 넣었고, 그 대기열은 이미 지나간 전투 시작 때만 비워졌다.
-**규칙**: 엔진 상태를 잠시 바꿔 놓고 도는 처리(배경 월드, 게스트 문맥, 대역 플레이어) 안에서는 다른 기능의 진입점을 부르지 않는다. 필요하면 그 처리 밖(장면의 `update`)에서 부른다. 이런 기능은 단위 테스트 외에 실제 장면 전환을 거치는 흐름 테스트를 하나 둔다.
+### Do not call other features inside processing that temporarily changes state
+**Situation**: In FH2 co-op, "when a boss battle starts, pull in players in the same room" was hung on the host's world processing (`worldExtras`). Unit tests all passed, but in a flow test going through real battle scenes, when the host fought directly the pulled guest could not get into the battle (2026-11-03).
+**Cause**: While the host is in battle, the background processing that runs the world sets `$gameParty._inBattle` to false. Requesting the join inside it made the host's join handler for itself see "battle still opening" and queue it; that queue was only flushed at battle start, which had already passed.
+**Rules**: Inside processing that temporarily changes engine state (background world, guest context, stand-in player), do not call other features' entry points. If needed, call them outside (in the scene `update`). For such features, keep one flow test that goes through real scene changes besides unit tests.
 
-### `Game_Map.setupEvents` 중에는 이벤트가 아직 맵 목록에 없다
-**상황**: FH2 코옵에서 게스트가 자기 PC로 포켓캣 장면(Map036 EV239, 자동 실행)을 본 뒤 호스트가 그 맵에 들어오면 호스트에게도 장면이 다시 돌았다. "게스트 PC에서 이미 돈 장면"을 막는 검사가 있었는데도 그랬다(2026-11-03).
-**원인**: 검사가 `$gameMap.event(this.eventId()) === this`(스냅샷이 만드는 복사본 제외용)일 때만 돌았다. 맵을 불러올 때 `new Game_Event` → `refresh` → `setupPage` → `checkEventTriggerAuto` → `start`가 `_events[id]`에 넣기 전에 불려서, 그때는 이 조건이 거짓이라 검사를 통째로 건너뛰었다.
-**규칙**: "맵의 진짜 이벤트인가"는 `!slot || slot === this`로 본다(`slot = $gameMap._events[id]`). 맵 진입 직후 자동 실행이 바로 시작되는 경로를 따로 테스트한다(다른 맵에 있다가 들어오는 흐름 테스트).
+### During `Game_Map.setupEvents` events are not yet in the map list
+**Situation**: In FH2 co-op, after a guest watched the Pocketcat scene (Map036 EV239, autorun) on their own PC, the scene ran again for the host when the host entered that map, despite a check blocking "scenes already run on a guest PC" (2026-11-03).
+**Cause**: The check ran only when `$gameMap.event(this.eventId()) === this` (to exclude copies made by snapshots). On map load, `new Game_Event` → `refresh` → `setupPage` → `checkEventTriggerAuto` → `start` is called before it is put into `_events[id]`, so the condition was false then and the whole check was skipped.
+**Rules**: Judge "is this the map's real event" with `!slot || slot === this` (`slot = $gameMap._events[id]`). Test separately the path where an autorun starts right after map entry (a flow test that comes in from another map).
 
-### 맵마다 읽지 말고 버그 유형으로 원작 데이터 전체를 훑는다
-**상황**: "아직 안 본 곳 검수" 요청에 맵이 76곳 남아 있었다(2026-11-03).
-**규칙**: 이미 찾은 버그의 유형(예: 맵 병렬 페이지가 켜는 스위치는 그 PC에만 남음)을 조건으로 써서 모든 Map/CommonEvents/Troops JSON을 스크립트로 훑는다. 후보가 많으면 "게임 어디에서도 다시 꺼지지 않음" 같은 성질로 좁혀 이야기 진행 값만 남긴다. 목록을 만든 스크립트는 저장소 `tools/`에 남겨 다시 만들 수 있게 한다.
+### Sweep all original data by bug type instead of reading map by map
+**Situation**: A request to "audit what hasn't been looked at" had 76 maps left (2026-11-03).
+**Rules**: Use the type of bug already found (e.g. switches turned on by map parallel pages stay only on that PC) as a condition and sweep all Map/CommonEvents/Troops JSON with a script. If there are many candidates, narrow them by properties like "never turned off anywhere in the game" to keep only story progress values. Keep the script that built the list in the repository's `tools/` so it can be rebuilt.
 
-- **추적 몬스터 렉 = 길찾기 × 이벤트 수 (FH2 2026-11-04).** MV의 `findDirectionTo`(A*)는 칸을 시험할 때마다 `canPass` → `eventsXyNt`로 맵의 이벤트를 전부 훑는다. 목표가 플레이어 칸이면 이벤트에게 늘 막혀 탐색 범위를 끝까지 채우므로, 이벤트 900개 맵에서는 한 걸음마다 수십~100ms가 된다(원작에서도). 탐색 중에는 아무것도 안 움직이니 탐색 시작 때 "칸 → 이벤트" 표를 한 번 만들고 그동안만 `eventsXyNt`가 표를 쓰게 하면 답은 같고 빠르다. 바꾼 탐색은 원작 함수와 무작위 수백 번 대조해서 같은 방향인지 확인. 렉 제보가 "특정 몬스터 근처"면 먼저 그 이벤트의 이동 방식(YEP 추적·커스텀 경로)과 맵 이벤트 수를 본다. 하네스(Node vm)는 전역 접근이 느려 절대 시간이 부풀려지니 원작 대비 비율로 판단.
+### Chase monster lag = pathfinding × event count (FH2 2026-11-04)
+- MV's `findDirectionTo` (A*) scans every event on the map through `canPass` → `eventsXyNt` for every tile it tries. When the goal is the player's tile it is always blocked by an event and fills the search range to the end, so on a map with 900 events each step takes tens to 100 ms (in the original too). Nothing moves during the search, so building a "tile → events" table once at search start and having `eventsXyNt` use it only during the search gives the same answer, fast. Compare the changed search with the original function a few hundred random times to confirm the same direction.
+- If a lag report says "near a certain monster", first look at that event's movement (YEP chase, custom route) and the map's event count. The harness (Node vm) has slow global access and inflates absolute times, so judge by ratio against the original.
 
-## 번역 패치 (Hendrix_Localization + YEP_MessageCore)
-Courage and Death 한글패치(2026-11-15)에서 게임을 직접 켜 보고 나서야 드러난 것들. 패치가 "검사 문제 0줄"이어도 게임 화면은 따로 확인한다.
+## Translation patches (Hendrix_Localization + YEP_MessageCore)
+Things that only showed up after actually running the game for the Courage and Death Korean patch (2026-11-15). Even when the patch has "0 lines with check problems", check the game screen separately.
 
-### 원작 번역표(CSV)가 게임 데이터와 어긋나 있을 수 있다
-**상황**: 번역을 99.6% 채웠는데 게임에서 군데군데 중국어가 나왔다. 사용자는 예전에 깨졌던 번역 파일 탓인지 물었다.
-**원인**: 개발자가 대사를 고친 뒤 `game_messages.csv`를 다시 뽑지 않아 원문 열이 옛 문장이었다(글자 하나만 달라도 정확 일치가 안 걸림, 72묶음). 스크롤 문장(405)은 CSV에 아예 없었고(414줄), System.json `terms.messages`의 전투 문형(`%1被击败了。`)도 없었다.
-**규칙**: CSV 원문으로만 번역 진행률을 세지 않는다. 게임 데이터(Map·CommonEvents·Troops)에서 Hendrix가 실제로 찾는 키를 똑같이 만들어 CSV와 대조한다: 101 뒤 401 줄을 줄바꿈으로 이은 묶음(YEP `messageRows` 4줄 단위), 102 선택지 각각, 405는 한 줄씩. System 문형은 `%1`을 채우기 전에 번역해야 하므로 `TextManager.message`를 감싼다. 빠진 줄은 패치 쪽 표(원문<TAB>번역)로 CSV 끝에 붙인다.
+### The original translation table (CSV) can be out of step with the game data
+**Situation**: Translation was 99.6% filled, yet Chinese still showed here and there in the game. The user asked if a previously broken translation file was to blame.
+**Cause**: The developer edited lines without re-exporting `game_messages.csv`, so the source column held old sentences (one different character breaks the exact match; 72 blocks). Scroll text (405) was not in the CSV at all (414 lines), nor were the battle message patterns in System.json `terms.messages` (`%1被击败了。`).
+**Rules**: Do not count translation progress from the CSV source alone. Rebuild from the game data (Map, CommonEvents, Troops) the exact keys Hendrix looks up and compare with the CSV: 401 lines after a 101 joined by newlines (YEP `messageRows`, 4-line units), each 102 choice, 405 one line each. System patterns must be translated before `%1` is filled, so wrap `TextManager.message`. Append missing lines from a patch-side table (source<TAB>translation) to the end of the CSV.
 
-### 저장된 설정의 언어가 기본 언어 설정을 이긴다
-**상황**: 플러그인 기본 언어를 ko로 바꿨는데 사용자 게임은 중국어로 켜졌다.
-**원인**: `config.rpgsave`에 이전 언어(zh)가 저장돼 있어서 `ConfigManager.applyData`가 그 값을 썼다.
-**규칙**: 패치를 깐 뒤 처음 한 번만 언어를 바꾼다. `applyData`에서 표시 키(`koPatchLangSet`)가 없으면 `config.language`를 덮고, `makeData`가 그 키를 저장하게 한다. 그 뒤로는 사용자가 옵션에서 고른 언어를 따른다.
+### The saved config's language beats the default language setting
+**Situation**: The plugin's default language was changed to ko, but the user's game still started in Chinese.
+**Cause**: `config.rpgsave` held the previous language (zh) and `ConfigManager.applyData` used it.
+**Rules**: Switch the language once only, the first time after the patch is installed. In `applyData`, if a marker key (`koPatchLangSet`) is missing, overwrite `config.language`, and have `makeData` save that key. After that, follow the language the user picks in options.
 
-### YEP WordWrap을 켜는 훅은 단어 폭 재기 중에 다시 켜면 안 된다
-**상황**: 대화창이 뜨자 `RangeError: Maximum call stack size exceeded`(drawTextEx → textWidthExCheck → checkWordWrap 반복)로 게임이 멈췄다.
-**원인**: `Window_Message.convertEscapeCharacters`에서 `<WordWrap>`을 붙이는 훅이, YEP가 줄바꿈을 끄고 단어 폭을 재는 `textWidthExCheck` 안에서도 다시 붙여 줄바꿈을 켰다.
-**규칙**: 이런 훅은 `this._checkWordWrapMode`가 참이면 건너뛴다. 대화창을 건드리는 훅은 Node에서 가짜 창으로라도 한 번 돌려 보고 넘긴다.
+### A hook that turns on YEP WordWrap must not turn it on again while measuring word width
+**Situation**: As soon as a dialogue window opened the game froze with `RangeError: Maximum call stack size exceeded` (drawTextEx → textWidthExCheck → checkWordWrap repeating).
+**Cause**: The hook adding `<WordWrap>` in `Window_Message.convertEscapeCharacters` also added it inside `textWidthExCheck`, where YEP turns wrapping off to measure word width, turning wrapping back on.
+**Rules**: Such hooks skip when `this._checkWordWrapMode` is true. Run any hook touching the dialogue window at least once in Node with a fake window before handing it over.
 
-### Hendrix 부분 일치는 자기 자신으로 번역되는 짧은 키에서 멈춘다
-**상황**: 아이템 획득 기록 `\I[296]\C[10][妨害]\C[0] 尸块 x1`이 번역 표에 다 있는데도 중국어로 나왔다.
-**원인**: 부분 일치는 긴 원문부터 한 곳만 바꾸는데, 여러 줄 행을 줄마다 쪼개 만든 `[10]`→`[10]` 같은 키가 먼저 걸려 결과가 그대로였다. 또 `drawTextEx`는 Hendrix가 번역하지 않는다.
-**규칙**: 남은 한자가 있으면 제어 문자·줄바꿈으로 나눈 조각마다, 그래도 남으면 띄어쓰기 단위로 Hendrix를 다시 부른다. 세이브에 저장된 문자열(획득·대화 기록, `Game_Actor._name`)은 저장 당시 언어로 남으므로 그릴 때(`drawTextEx`, `actorName`) 번역한다.
+### Hendrix partial matching stops at short keys that translate to themselves
+**Situation**: The item gain log `\I[296]\C[10][妨害]\C[0] 尸块 x1` came out in Chinese even though every piece was in the table.
+**Cause**: Partial matching replaces only one place, longest source first, and keys like `[10]`→`[10]` (made by splitting multi-line rows per line) matched first, so the result stayed the same. Also Hendrix does not translate `drawTextEx`.
+**Rules**: If Chinese characters remain, call Hendrix again per piece split by control codes and newlines, and if some still remain, per space-separated word. Strings stored in saves (gain and dialogue logs, `Game_Actor._name`) stay in the language at save time, so translate them when drawing (`drawTextEx`, `actorName`).

@@ -1,80 +1,80 @@
-# Windows 환경과 도구
+# Windows environment and tools
 
-## PowerShell 5.1은 UTF-8 BOM을 붙인다
+## PowerShell 5.1 adds a UTF-8 BOM
 
-**상황**: PowerShell 5.1로 만든 릴리스 노트 파일 맨 앞에 BOM이 붙은 채 GitHub 릴리스에 올라갔습니다.
+**Situation**: A release notes file made with PowerShell 5.1 went up to a GitHub release with a BOM at the start.
 
-**원인**: PowerShell 5.1의 `Out-File`과 `>`는 UTF-8 BOM을 붙입니다.
+**Cause**: In PowerShell 5.1, `Out-File` and `>` add a UTF-8 BOM.
 
-**규칙**
-- 외부로 보내는 텍스트(릴리스 노트, 스크립트, 데이터)는 BOM 없이 씁니다.
+**Rules**
+- Write text that leaves the machine (release notes, scripts, data) without BOM.
   ```powershell
   [IO.File]::WriteAllText($path, $text, (New-Object Text.UTF8Encoding $false))
   ```
-- 올린 뒤에는 결과를 다시 조회해서 확인합니다(예: `gh release view --json body`).
+- After uploading, query the result again to check (e.g. `gh release view --json body`).
 
-## Python 출력의 한글이 깨진다 (cp949)
+## Korean in Python output breaks (cp949)
 
-**원인**: Windows 콘솔 기본 인코딩은 cp949이고, `python -I`는 `PYTHONIOENCODING`을 무시합니다.
+**Cause**: The Windows console default encoding is cp949, and `python -I` ignores `PYTHONIOENCODING`.
 
-**규칙**: 스크립트 안에서 `sys.stdout.reconfigure(encoding="utf-8")`를 호출하거나, 결과를 `encoding="utf-8"` 파일로 쓴 뒤 읽습니다.
+**Rules**: Call `sys.stdout.reconfigure(encoding="utf-8")` in the script, or write results to a file with `encoding="utf-8"` and read it.
 
-## 따옴표가 많은 코드를 헤레독으로 넘기지 않는다
+## Do not pass quote-heavy code through a heredoc
 
-**상황**: `python - <<'EOF'`로 따옴표가 섞인 치환 스크립트를 넘기다 "unexpected EOF" 오류로 실패했습니다.
+**Situation**: Passing a replace script with mixed quotes via `python - <<'EOF'` failed with "unexpected EOF".
 
-**규칙**: 길거나 따옴표가 섞인 스크립트는 임시 폴더에 `.py`/`.js` 파일로 써서 실행합니다. 코드 수정은 가능하면 파일 편집 도구로 합니다.
+**Rules**: Write long or quote-mixed scripts as `.py`/`.js` files in a temp folder and run them. Do code edits with the file edit tool where possible.
 
-## 공백, `&`, 한글이 섞인 경로
+## Paths with spaces, `&`, Korean
 
-**상황**: `...\common\Fear & Hunger 2 Termina`, `새폴더` 같은 경로를 다뤘습니다.
+**Situation**: Handled paths like `...\common\Fear & Hunger 2 Termina` and `새폴더`.
 
-**규칙**
-- 경로는 항상 큰따옴표로 감쌉니다. bat에서는 `set "GAME=..."`, `start "" /D "%GAME%" ...` 형식을 씁니다.
-- 설치 경로를 하드코딩하지 말고 후보 목록을 차례로 찾고, 인자나 환경변수로 덮어쓸 수 있게 합니다.
+**Rules**
+- Always wrap paths in double quotes. In bat use `set "GAME=..."`, `start "" /D "%GAME%" ...`.
+- Do not hardcode install paths; search a list of candidates in turn, and allow overriding by argument or environment variable.
 
-## 새로 설치한 도구가 인식되지 않는다 (PATH)
+## Newly installed tool not found (PATH)
 
-**상황**: `winget install GitHub.cli` 직후 같은 셸에서 `gh`가 인식되지 않았습니다. 사용자 폴더에 설치한 .NET을 VS Code 확장이 찾지 못했습니다.
+**Situation**: Right after `winget install GitHub.cli`, `gh` was not found in the same shell. A VS Code extension could not find .NET installed in the user folder.
 
-**규칙**
-- 같은 셸에서는 PATH를 다시 읽습니다.
+**Rules**
+- In the same shell, reload PATH.
   ```powershell
   $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User')
   ```
-- 영구 적용은 사용자 PATH(필요하면 `DOTNET_ROOT`)에 등록하고, VS Code 같은 앱은 완전히 재시작하라고 안내합니다.
+- For a permanent fix, register it in the user PATH (and `DOTNET_ROOT` if needed), and tell the user to fully restart apps like VS Code.
 
-## 도구 버전과 런타임 호환을 확인한다
+## Check tool version vs runtime compatibility
 
-**상황**: `ilspycmd` 8.2는 .NET 6 런타임을 요구해서 .NET 8만 있는 환경에서 실패했습니다.
+**Situation**: `ilspycmd` 8.2 needs the .NET 6 runtime and failed where only .NET 8 was installed.
 
-**규칙**: dotnet tool 등을 설치할 때는 설치된 런타임과 맞는 버전을 고릅니다.
+**Rules**: When installing dotnet tools etc., pick the version matching the installed runtime.
 
-## git "dubious ownership" 오류
+## git "dubious ownership" error
 
-**상황**: 소유권을 기록하지 않는 드라이브(외장·FAT/exFAT 등)의 저장소에서 git이 동작을 거부했습니다.
+**Situation**: git refused to work in a repository on a drive that does not record ownership (external, FAT/exFAT, etc.).
 
-**규칙**: 전역 설정을 바꾸지 말고 명령마다 `git -c safe.directory='*' ...`를 붙입니다. 전역 설정 변경은 사용자 동의를 받은 뒤에만 합니다.
+**Rules**: Do not change global config; add `git -c safe.directory='*' ...` per command. Change global config only with the user's consent.
 
-## gh 로그인: 장치 코드는 이메일로 오지 않는다
+## gh login: the device code does not come by email
 
-**상황**: 사용자가 "깃헙 코드가 안 온다"며 기다리고 있었습니다.
+**Situation**: The user was waiting, saying "the GitHub code isn't arriving".
 
-**규칙**: 장치 코드는 터미널에만 표시됩니다. 다음 방식이 잘 됐습니다.
-1. `$env:GH_BROWSER='echo'`로 두고 `gh auth login -h github.com -p https -w`를 백그라운드로 실행합니다.
-2. 출력된 코드와 `https://github.com/login/device` 주소를 사용자에게 전달합니다.
+**Rules**: The device code only shows in the terminal. This worked well:
+1. Set `$env:GH_BROWSER='echo'` and run `gh auth login -h github.com -p https -w` in the background.
+2. Pass the printed code and the `https://github.com/login/device` address to the user.
 
-참고: 인증 없이 GitHub API를 호출해서 404가 나면 비공개 저장소일 수 있습니다. 조회는 로그인된 `gh`로 합니다.
+Note: a 404 from an unauthenticated GitHub API call may mean a private repository. Query with the logged-in `gh`.
 
-## 사용자가 붙여 넣은 이미지가 디스크에 없을 수 있다
+## An image the user pasted may not be on disk
 
-**규칙**: 이미지 파일을 저장하겠다고 약속하기 전에 파일이 실제로 있는지 확인합니다.
+**Rules**: Before promising to save an image file, check that the file actually exists.
 
-## 지우거나 덮어쓰기 전에 대상과 복구 방법을 확인한다
+## Before deleting or overwriting, confirm the target and the way back
 
-**규칙**
-- `Remove-Item -Recurse`, `git clean`, 강제 체크아웃, 대량 치환, 세이브 덮어쓰기 전에 대상 목록을 먼저 출력해 봅니다.
-- 미커밋 변경이 있으면 보존 방법을 먼저 정하고, 사용자 승인 없이 초기화하지 않습니다.
-- 복구가 어려운 파일은 백업 사본을 만들고 그 경로를 적습니다.
-- `sed -i` 같은 일괄 치환은 파일의 줄바꿈(CRLF)을 바꿀 수 있습니다. 치환 뒤 `git diff --stat`으로 바뀐 줄 수가 의도와 맞는지 봅니다.
-- Bash 도구에서 heredoc으로 넘긴 Python 문자열 안의 `\'`(JS의 `\'`)는 백슬래시가 빠져 `'`로 들어갑니다. JS 코드에 이스케이프된 따옴표가 있으면 그 부분은 Edit 도구로 바꾸고, 바꾼 뒤 `node --check`를 돌립니다.
+**Rules**
+- Before `Remove-Item -Recurse`, `git clean`, forced checkout, mass replace, or overwriting a save, print the target list first.
+- If there are uncommitted changes, decide how to keep them first; never reset without the user's approval.
+- For files that are hard to recover, make a backup copy and write down its path.
+- Bulk replaces like `sed -i` can change a file's line endings (CRLF). After replacing, check with `git diff --stat` that the number of changed lines matches the intent.
+- In a Python string passed by heredoc through the Bash tool, `\'` (JS `\'`) loses its backslash and goes in as `'`. If JS code has escaped quotes, change that part with the Edit tool and run `node --check` afterwards.

@@ -1,144 +1,156 @@
-# 협업과 소통
+# Collaboration and communication
 
-## 사용자 성향
+## About the user
 
-- 한국어로 짧고 직설적으로 말합니다("ㄱㄱ", "ㅇㅋ", "올리셈"). 답도 한국어로, 결론 위주로 짧게 합니다.
-- 한/영 전환 실수가 잦습니다. 뜻이 안 통하는 짧은 영문은 먼저 두벌식 한글로 바꿔 읽습니다(예: `gd` = `ㅎㅇ`).
-- 사용량 한도에 민감합니다. 분석은 꼭 필요한 만큼만 하고, 한도가 빠듯하면 병렬 작업 수를 줄이고 그 사실을 알립니다.
-- 게임 디자인 의도가 분명합니다. 복잡해도 재미있는 쪽을 고르고, 버그가 많아질 쪽은 단순화합니다.
+- Speaks Korean, short and blunt ("ㄱㄱ" = go, "ㅇㅋ" = ok, "올리셈" = upload it). Answer in Korean too, short and conclusion-first.
+- Often forgets to switch the Korean/English keyboard. Short English that makes no sense should first be read as 2-set Korean keys (e.g. `gd` = `ㅎㅇ`).
+- Sensitive to usage limits. Analyze only as much as needed; when the limit is tight, run fewer parallel jobs and say so.
+- Has clear game design intent. Picks the fun option even if complex; simplifies where bugs would multiply.
 
-## 진행 상태를 매번 명확히 적는다
+## State the status clearly every time
 
-**상황**: AI가 "바로 시작할까요?"라고 묻고 멈춘 사이, 사용자가 기능 키를 눌러 보고 "아무것도 안 뜬다"고 했습니다.
+**Situation**: While the AI stopped to ask "shall I start?", the user pressed the feature key and said "nothing shows up".
 
-**규칙**
-- 기능마다 상태를 적습니다: `구현 전` / `구현했지만 미검증` / `확인됨`.
-- 실제로 실행해 보지 않았으면 "문법 검사·자동 테스트만 통과, 실제 실행은 미확인"이라고 분명히 씁니다.
-- 코드를 바꾼 뒤에는 무엇을 재시작해야 하는지(새로고침인지, 프로세스 완전 종료인지)도 함께 안내합니다.
-- 테스트 순서는 번호 체크리스트로 줍니다. 어느 창에서 무엇을 누르는지까지 적습니다.
+**Rules**
+- Give each feature a status: `not built` / `built but unverified` / `confirmed`.
+- If it was not actually run, say clearly "only syntax check / automated tests passed, not run for real".
+- After code changes, also say what has to restart (a reload, or fully killing the process).
+- Give test steps as a numbered checklist, down to which window and which key.
 
-## 오래 걸리는 작업은 진행 창을 띄운다
+## Show a progress window for long jobs
 
-**상황**: 전체 테스트 묶음(약 20분)을 백그라운드로 돌리자, 사용자는 테스트가 도는지 멈췄는지 알 수 없었습니다. 멈춘 실행의 하위 프로세스가 몰래 계속 돌아 두 실행이 겹친 일도 있었습니다. 별도 터미널 창에 단계별 진행 막대를 띄우자 사용자가 "이런 거 할 때마다 띄워 달라"고 했습니다(2026-10-31).
+**Situation**: With the full test suite (~20 min) running in the background, the user could not tell if it was running or stuck. Once, a child process of a stopped run kept running quietly and two runs overlapped. After a separate terminal window with per-stage progress bars was shown, the user said "show this every time" (2026-10-31).
 
-**규칙**
-- 몇 분 넘게 걸리는 백그라운드 작업(전체 테스트, 빌드, 대량 처리)을 시작하면, **매번** 진행 창을 별도 터미널로 띄웁니다. Windows: `Start-Process powershell -ArgumentList '-NoExit','-NoProfile','-ExecutionPolicy','Bypass','-File','<스크립트>.ps1'`.
-- 진행 창은 **읽기만** 합니다. 작업의 출력·요약 파일과 프로세스 목록을 2초마다 읽어 그리고, 작업에는 손대지 않습니다.
-- 보여 줄 것:
-  - 단계별 막대: 끝남(초록, 결과 한 줄), 진행 중(노랑, 경과 시간 / 평소 시간, 마지막 출력 한 줄), 대기(회색)
-  - 전체 진행률
-  - 실제로 도는 작업 프로세스 수: 0이면 빨간 경고
-  - 끝나면 통과·실패 요약을 보여 주고 갱신을 멈춤
-- 진행률은 평소 소요 시간으로 추정합니다. 평소보다 길면 99%에서 멈추고 "longer than usual"을 붙입니다.
-- PowerShell 5.1에서 실수한 것:
-  - 해시테이블 배열에 `Measure-Object -Property`를 쓰면 합계가 0이 됩니다. 직접 더합니다.
-  - `[Math]::Min(1, $p)`는 정수 버전이 골라져 0.79가 1이 됩니다. `[double]`로 씁니다.
-  - BOM 없는 `.ps1`의 한글은 깨지므로 창 문구는 영어로 씁니다.
-  - `-like '[mem]*'`의 `[...]`는 와일드카드 글자 묶음("m, e 중 하나")이라 `[mem] ...` 줄을 하나도 못 셉니다. 대괄호가 든 머리말은 `-match '^\[mem\]'`로 셉니다(2026-11-05, 창이 0%에 멈춘 채로 보였음).
-- 창 제목에 "선택"이 붙으면(콘솔을 클릭한 QuickEdit 상태) 화면 갱신이 멈춥니다. 작업은 계속 돌고, Esc나 우클릭으로 풀린다고 사용자에게 알려 줍니다.
-- 작업을 멈출 때는 셸만이 아니라 하위 프로세스(node 등)까지 끝났는지 프로세스 목록으로 확인합니다. 그 뒤에 다시 시작합니다.
-- 단계를 이어 돌리는 스크립트(sh 등)는 **스크립트 프로세스부터** 끕니다. node만 끄면 스크립트가 다음 단계를 바로 다시 띄웁니다. 도구의 "백그라운드 작업 중지"로는 스크립트가 남은 적이 있습니다. 2026-10-31에는 이렇게 남은 sh 두 개가 계속 테스트를 띄워 실행이 겹쳤습니다. 명령줄로 찾아 끕니다: `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match '<스크립트 이름>' }`.
+**Rules**
+- When starting a background job that takes more than a few minutes (full tests, builds, bulk processing), open a progress window in a separate terminal **every time**. Windows: `Start-Process powershell -ArgumentList '-NoExit','-NoProfile','-ExecutionPolicy','Bypass','-File','<script>.ps1'`.
+- The window **only reads**: every 2 s it reads the job's output/summary files and the process list and draws; it never touches the job.
+- Show:
+  - Per-stage bars: done (green, one result line), running (yellow, elapsed / usual time, last output line), waiting (grey)
+  - Overall progress
+  - Number of job processes actually running: red warning at 0
+  - When finished, a pass/fail summary, then stop refreshing
+- Estimate progress from the usual duration. If longer than usual, hold at 99% and add "longer than usual".
+- PowerShell 5.1 mistakes made:
+  - `Measure-Object -Property` on an array of hashtables sums to 0. Add them yourself.
+  - `[Math]::Min(1, $p)` picks the integer overload and 0.79 becomes 1. Use `[double]`.
+  - Korean in a `.ps1` without BOM breaks, so write window text in English.
+  - In `-like '[mem]*'`, `[...]` is a wildcard character set ("one of m, e"), so it counts none of the `[mem] ...` lines. Match bracketed prefixes with `-match '^\[mem\]'` (2026-11-05, the window looked stuck at 0%).
+- If the window title gets "Select" (QuickEdit after clicking the console), drawing stops. The job keeps running; tell the user Esc or right-click releases it.
+- When stopping a job, confirm from the process list that child processes (node etc.) ended too, not just the shell. Then restart.
+- For scripts that chain stages (sh etc.), kill **the script process first**. Killing only node lets the script start the next stage right away. The tool's "stop background task" has left the script alive before; on 2026-10-31 two such sh processes kept launching tests and runs overlapped. Find and kill by command line: `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match '<script name>' }`.
 
-## 사용자의 핵심 의도를 기술 편의로 깎지 않는다
+## Do not trim the user's core intent for technical convenience
 
-**상황**: 코옵 모드를 "호스트 중심, 게스트는 같은 맵에 끌려다님"으로 설계했다가 강하게 반려됐습니다. 사용자에게 코옵의 핵심은 각 플레이어의 주체성(자기 캐릭터, 자기 스토리, 자유 이동)이었습니다. 결국 맵 분리 구조로 다시 설계했습니다.
+**Situation**: The co-op mod was designed as "host-centred, guests dragged along on the same map" and strongly rejected. For the user the core of co-op was each player's agency (own character, own story, free movement). It was redesigned with separate maps.
 
-**규칙**
-- 설계 초기에 "이 프로젝트에서 절대 포기하면 안 되는 것"을 먼저 확인합니다.
-- 기술 제약으로 포기해야 한다면 숫자와 근거로 설명하고, 선택지 2~3개와 각각의 비용을 주고 사용자가 고르게 합니다. 추천안은 붙입니다.
-- 결정이 나면 바로 기획 문서에 반영하고, 답이 빠진 항목을 따로 짚습니다.
+**Rules**
+- Early in design, first confirm "what this project must never give up".
+- If a technical limit forces giving something up, explain with numbers and evidence, give 2-3 options with their costs, and let the user choose. Include a recommendation.
+- Once decided, put it in the planning doc right away and point out items still unanswered.
 
-## 설명은 구체적인 상황 예시로
+## Explain with concrete situations
 
-**상황**: README에 "게스트가 연 컷신이 호스트 페이지와 같으면 호스트 주인공으로 공유" 같은 내부 용어 문장을 썼더니, 사용자가 무슨 뜻인지 모르겠다고 했습니다.
+**Situation**: The README had an internal-jargon sentence like "a cutscene opened by a guest is shared with the host as protagonist if it matches the host page"; the user could not tell what it meant.
 
-**규칙**: 사용자용 설명은 "누가, 어디서, 무엇을 보게 되는지"로 씁니다. 해석이 갈리는 요청은 되물어서 확인하고 문서에 고정합니다.
+**Rules**: Write user-facing explanations as "who, where, sees what". When a request can be read two ways, ask back and pin it in the doc.
 
-## 사용자 제보는 원작 동작과 내 버그로 구분해서 답한다
+## Separate original behavior from my bug when answering reports
 
-**규칙**: "○○가 안 된다"는 제보를 받으면 먼저 그게 원래 프로그램(원작)의 동작인지 데이터·코드로 확인합니다. 원작 동작이면 근거를 보여 주고, 고칠지는 사용자에게 선택지로 줍니다.
+**Rules**: On a report "X doesn't work", first check from data/code whether it is the original program's (the base game's) behavior. If it is, show the evidence and give the user options on whether to change it.
 
-## 사용자가 쓴 문서는 덮어쓰지 않는다
+## Do not overwrite docs the user wrote
 
-**규칙**: 사용자가 직접 쓴 기획 문서(예: `기획.md`)는 원본을 건드리지 않습니다. 정리본(`기획_정리.md`)과 작업 로그(`진행상황.md`)를 따로 둡니다.
+**Rules**: Do not touch the original of a planning doc the user wrote (e.g. `기획.md`). Keep a cleaned-up copy (`기획_정리.md`) and a work log (`진행상황.md`) separately.
 
-## 인수인계 문서를 항상 최신으로
+## Keep handover docs current
 
-**상황**: 사용자는 자리를 비울 때 "md로 진행상황 저장해", "푸시해"를 자주 요청하고, 다른 PC에서 이어서 작업하기도 합니다.
+**Situation**: The user often says "save progress to md" and "push" when stepping away, and sometimes continues on another PC.
 
-**규칙**
-- 진행 상황 문서에는 한 것, 할 것(순서대로), 미결정 사항, 알려진 위험, 주요 ID·경로를 둡니다.
-- 다른 PC의 AI는 이 PC의 메모리를 볼 수 없습니다. 이어서 하는 데 필요한 정보는 전부 저장소 안 문서에 적습니다.
-- 서브에이전트의 분석 결과는 세션이 끝나면 사라집니다. 중요한 결과(ID, 줄 번호, 규모)는 문서로 남깁니다.
+**Rules**
+- The progress doc holds: what was done, what is next (in order), open decisions, known risks, key IDs and paths.
+- An AI on another PC cannot see this PC's memory. Write everything needed to continue into docs inside the repository.
+- Sub-agent analysis disappears when the session ends. Write important results (IDs, line numbers, scale) into docs.
 
-## PC를 옮겨 pull할 때 커밋 안 한 수정과 게임 설치본을 먼저 본다
+## Tidy the .md files every time a piece of work ends; move finished items to old
 
-**상황**: 메인 컴퓨터에서 `CLAUDE.md`를 고쳐 두고 커밋하지 않은 사이, 노트북에서 같은 줄을 다르게 고쳐 푸시했습니다. 메인 컴퓨터에서 pull하자 git이 덮어쓰기를 거부했습니다. 또 인수인계 문서에는 "게임 폴더에 깔렸는지 확실하지 않다"고만 적혀 있었는데, 비교해 보니 최신 커밋 2개가 빠진 빌드가 깔려 있었습니다(2026-10-31).
+**Situation**: FH2 `진행상황.md` kept piling up finished work, questions the user had already answered, and the "current state" of past versions. A new session read it, reported finished work as to-do, and asked questions that were already answered. The user: "you're asking about things already done" (2026-11-15).
 
-**규칙**
-- pull 전에 `git status --short`로 커밋 안 한 수정을 확인합니다. 들어올 커밋이 같은 파일을 건드리면 `git stash push -- <파일>`로 빼 두고 `git pull --ff-only` 한 뒤, 다시 적용합니다. 같은 줄이 충돌하면 stash를 버리지 말고 두 버전을 보여 주고 사용자가 고르게 합니다.
-- 규칙 파일(`CLAUDE.md` 등)은 한 PC에서 고쳤으면 그 자리에서 커밋·푸시를 요청하거나, 진행 문서에 "커밋 안 함"이라고 남깁니다.
-- 설치형 모드는 PC를 옮긴 뒤 게임 폴더 파일을 저장소와 `cmp`로 비교해 어느 커밋이 깔렸는지 확인합니다. 줄바꿈(CRLF)만 다른 경우는 `diff --strip-trailing-cr`로 가립니다.
+**Rules**
+- Each time a piece of work ends (a feature, a bug fix, one audit section, a build), tidy the status docs (progress, handover, instruction sheets, notes `.md`) **right then**. Do not leave it for the next session.
+- Move finished work, answered questions, past "current state" blocks and used-up instruction files (task, done, design, diff) **into an `old/` folder**. If the project already has an archive folder, use it (FH2: `docs/기록(보관용)/`, `notes/old/`). Move, do not delete.
+- A status doc keeps only: the current version, open work, questions still waiting for an answer, things to check in the real app/game, and known issues. Take answered questions out of "questions"; write the decision in the project's decision doc (FH2: `기획_정리.md`).
+- After tidying, reread the status doc top to bottom and ask of every line "is this still to do?". If the change log or a commit already says it was made or fixed, remove it.
+- Before reporting to-dos or questions to the user, `grep` the change log and `git log` to confirm the item is not already done.
+- Fix links to moved files (README, CLAUDE.md, code comments): find them with `grep -rn "<file name>"`.
 
-## 일회성 요청을 상시 규칙으로 넓히지 않는다
+## When switching PCs and pulling, check uncommitted edits and the game install first
 
-**상황**: 사용자가 스크린샷 하나를 저장해 달라고 한 뒤, AI가 이후의 스크린샷까지 모두 저장했고 사용자가 원하지 않았습니다.
+**Situation**: `CLAUDE.md` was edited on the main PC and left uncommitted, while the laptop changed the same line differently and pushed. Pulling on the main PC, git refused to overwrite. Also the handover only said "not sure it's installed in the game folder"; comparing showed a build missing the latest 2 commits (2026-10-31).
 
-**규칙**: "이거 해 줘"는 그 대상에만 적용합니다. 계속 그렇게 할지는 사용자가 "앞으로", "항상"이라고 말할 때만 넓힙니다.
+**Rules**
+- Before pulling, check uncommitted edits with `git status --short`. If incoming commits touch the same file, set it aside with `git stash push -- <file>`, `git pull --ff-only`, then reapply. If the same line conflicts, do not drop the stash; show both versions and let the user choose.
+- If rule files (`CLAUDE.md` etc.) were edited on one PC, ask to commit and push right there, or note "not committed" in the progress doc.
+- For install-type mods, after switching PCs compare the game folder files with the repository using `cmp` to see which commit is installed. Filter line-ending-only (CRLF) differences with `diff --strip-trailing-cr`.
 
-## 서브 에이전트는 병렬로 돌릴 때만
+## Do not widen a one-off request into a standing rule
 
-**상황**: 순서대로 하는 작업(작성 → 검수)에 서브 에이전트를 띄우자 사용자가 "병렬 작업 되는 거 아니면 토큰 낭비"라며 멈추게 했습니다(2026-10-30). 에이전트는 맥락을 처음부터 다시 읽어서 토큰이 많이 듭니다.
+**Situation**: The user asked to save one screenshot; the AI then saved every later screenshot too, which the user did not want.
 
-**규칙**
-- 서브 에이전트는 서로 다른 일을 실제로 동시에 진행할 때만 씁니다.
-- 큰 기능도 메인 세션에서 직접 작성합니다. 검수 단계는 빼지 않고, 메인 세션이 diff를 처음부터 다시 읽으며 아래 절의 관점(기존 기능과 겹치는 경로)으로 실패 시나리오를 찾습니다.
-- 아래 "작성 에이전트 → 검수 에이전트" 절은 검수에서 무엇을 볼지에 대한 참고로만 씁니다.
+**Rules**: "Do this" applies to that target only. Widen it only when the user says "from now on" or "always".
 
-## 큰 기능은 "작성 에이전트 → 검수 에이전트"를 한 묶음으로 (예전 방식)
+## Sub-agents only when running in parallel
 
-**상황**: 큰 기능을 한 번에 만들면 사용자가 플레이 테스트에서 버그를 찾고, 고치고, 다시 테스트하는 일이 여러 번 반복됐습니다. 사용자가 "코드 만들기 에이전트와 코드 검수 에이전트를 한 묶음으로 묶어서 만들어라, 그래야 일을 여러 번 안 한다"고 요청했습니다.
+**Situation**: Sub-agents were launched for sequential work (write → review); the user stopped it: "a waste of tokens unless it's parallel work" (2026-10-30). Agents reread context from scratch and cost many tokens.
 
-**규칙**
-- 메인 AI가 먼저 코드를 읽고 설계 브리프를 씁니다. 브리프에는 관련 함수와 줄 번호, 메시지 흐름, 건드리면 안 되는 규칙(원본 데이터 수정 금지, UI 영어 등), 추가할 테스트 목록, 보고 형식을 넣습니다. 서브에이전트는 이 대화를 모르므로 브리프만 보고 일할 수 있어야 합니다.
-- 작성 에이전트는 코드와 테스트를 만들고, 바꾼 함수, 새 메시지, 테스트 결과, 확신 없는 부분을 보고합니다. 버전 번호와 README는 메인 AI가 맡습니다.
-- 검수 에이전트는 새로 띄웁니다. 작성 에이전트의 보고와 설계 브리프만 받고, 실제 코드를 다시 읽어 실패 시나리오를 찾습니다. 다른 기능과 겹치는 경로(끊김, 사망, 저장, 이미 있는 래퍼 순서)를 특히 봅니다.
-- 검수에서 나온 문제는 작성 에이전트에게 다시 보내 고치게 하고, 고친 뒤 테스트를 전부 다시 돌립니다. 그다음 메인 AI가 결과를 확인하고 사용자에게 보고합니다.
-- 같은 파일을 두 에이전트가 동시에 고치지 않습니다. 작성과 검수는 순서대로 돌립니다(git 저장소가 아니면 worktree 격리도 못 씁니다).
-- 실제 사례(FH2 0.35): 작성 에이전트의 테스트(509개)가 모두 통과한 뒤에도, 검수 에이전트가 진짜 버그 9건을 찾았습니다. 아이템 복제, 다른 사람 세계 덮어쓰기, 연결 끊김 때 "전투 중" 상태가 남는 문제 등입니다. 작성자는 자기가 만든 경로만 테스트하므로, 검수는 기존 기능과 겹치는 경로를 따로 봐야 합니다.
+**Rules**
+- Use sub-agents only when different jobs really run at the same time.
+- Write even large features in the main session. Do not skip review: the main session rereads the diff from the start and looks for failure scenarios from the angle in the section below (paths that cross existing features).
+- Use the "writer agent → reviewer agent" section below only as a reference for what to look at in review.
 
-## 다른 AI 도구가 같은 작업 트리를 고쳤으면 먼저 대조한다
+## Large features as one bundle "writer agent → reviewer agent" (old way)
 
-**상황**: FH2 0.41 작업 중 Claude 작성 에이전트가 사용량 한도로 멈춘 사이, 사용자가 Codex로 같은 파일(수면 코드, 플러그인)을 고쳤습니다. 두 변경이 섞인 상태에서 전체 테스트 6개가 실패했고, 검수에서는 Codex 변경과 새 설계가 겹쳐 생긴 버그(침대 "No"를 골라도 누운 사람으로 남음)와 Codex 좌석 연출이 인트로 뒤 캐릭터를 투명하게 남기는 버그가 나왔습니다. Codex는 문법 검사만 하고 자동 테스트는 돌리지 않았습니다.
+**Situation**: Building a large feature in one go meant the user found bugs in play tests, it got fixed, and tested again, many rounds. The user asked: "bundle a code-writing agent and a code-review agent together so the work isn't repeated".
 
-**규칙**
-- 멈췄던 에이전트를 재개하기 전에 `git diff --stat`와 상대 도구의 인수인계 문서를 확인하고, 어느 변경이 누구 것인지 브리프에 적습니다.
-- 다른 도구의 수정은 살리되 한 흐름으로 합치게 하고(같은 일을 하는 경로 두 개 금지), 그 경로에도 테스트를 붙입니다.
-- 합친 뒤에는 상대 도구의 변경까지 검수 범위에 넣습니다. "사용자가 직접 해 봤더니 괜찮았다"는 해 본 상황만 확인한 것입니다.
-- 다른 도구에도 같은 규칙(자동 테스트 실행, 인수인계 문서 남기기)을 쓰도록 사용자에게 권합니다.
-- 다른 도구가 "테스트 통과"라고 보고해도 실행한 명령과 결과를 확인합니다. 문법 검사, 단위 테스트, 통합 테스트, 실제 게임 확인은 서로 다른 증거입니다. 도구를 바꾼 뒤에는 관련 테스트를 다시 돌립니다.
-- 사용량 한도 등으로 멈출 때는 코드를 억지로 이어 고치지 말고, 인수인계 문서에 아래를 남깁니다.
+**Rules**
+- The main AI reads the code first and writes a design brief: related functions and line numbers, message flow, rules not to break (no editing original data, English UI, etc.), tests to add, report format. Sub-agents do not know this conversation, so they must be able to work from the brief alone.
+- The writer agent builds code and tests and reports changed functions, new messages, test results and uncertain parts. The main AI handles version numbers and README.
+- Launch the reviewer agent fresh. It gets only the writer's report and the brief, rereads the actual code and looks for failure scenarios, especially paths that cross other features (disconnects, death, saving, existing wrapper order).
+- Send review findings back to the writer to fix, then rerun all tests. Then the main AI checks the results and reports to the user.
+- Two agents never edit the same file at the same time. Write and review run in order (outside a git repository you cannot use worktree isolation either).
+- Real case (FH2 0.35): after all 509 of the writer's tests passed, the reviewer still found 9 real bugs: item duplication, overwriting someone else's world, a lingering "in battle" state after a disconnect, etc. Writers only test the paths they built, so review must look at paths crossing existing features separately.
+
+## If another AI tool edited the same working tree, compare first
+
+**Situation**: During FH2 0.41, while a Claude writer agent was stopped by the usage limit, the user edited the same files (sleep code, plugins) with Codex. In the mixed state 6 full tests failed, and review found a bug from Codex's change overlapping the new design (choosing "No" at the bed still left you lying down) and a bug where Codex's seat staging left the character invisible after the intro. Codex only ran a syntax check, no automated tests.
+
+**Rules**
+- Before resuming a stopped agent, check `git diff --stat` and the other tool's handover doc, and write in the brief which change is whose.
+- Keep the other tool's edits but merge them into one flow (no two paths doing the same thing), and put tests on that path too.
+- After merging, include the other tool's changes in review scope. "The user tried it and it was fine" only covers the situation they tried.
+- Suggest to the user that other tools follow the same rules (run automated tests, leave a handover doc).
+- Even if another tool reports "tests passed", check the commands run and their results. Syntax check, unit tests, integration tests and real game checks are different evidence. After switching tools, rerun the related tests.
+- When stopping for usage limits etc., do not force code edits further; leave this in the handover doc:
   ```text
-  목표 / 승인된 설계와 하지 말 것:
-  브랜치와 git 상태, 고친 파일:
-  마지막으로 통과한 테스트(명령 포함) / 실패한 테스트와 오류:
-  게임(실제 환경) 확인 여부, 미확인 위험:
-  다음 할 일(순서대로):
+  Goal / approved design and what not to do:
+  Branch and git state, files changed:
+  Last passing tests (with command) / failing tests and errors:
+  Checked in the game (real environment)? Unchecked risks:
+  Next steps (in order):
   ```
 
-## 보고할 때 확인한 것·추정·미확인을 나눈다
+## In reports, separate confirmed / guess / unchecked
 
-**규칙**
-- 확인한 것: 파일, 로그, 테스트 결과로 본 내용.
-- 추정: 지금 증거로 가능성이 높은 원인과 그 근거.
-- 미확인: 실제 게임 실행, 다른 PC, 실제 계정처럼 아직 보지 못한 범위.
-- 원인을 특정하지 못했으면 "해결됨"이라고 쓰지 않고, 다음에 필요한 로그와 재현 절차를 함께 적습니다.
+**Rules**
+- Confirmed: what was seen in files, logs, test results.
+- Guess: the likely cause given current evidence, with the reasoning.
+- Unchecked: scope not yet seen, like running the real game, another PC, a real account.
+- If the cause is not pinned down, do not write "fixed"; write the logs and repro steps needed next.
 
-## 도구가 안전 검사로 막히면 우회하지 말고 바로 알린다
+## If a tool is blocked by a safety check, do not work around it; say so right away
 
-**상황**: Claude Code 자동 모드에서 파일 쓰기가 "안전 검사기가 판정하지 못함"으로 거부됐습니다. 다시 시도해도 같은 결과라는 안내가 함께 나왔습니다. 사용자는 그 사이 다른 요청(PDF 확인)을 보냈고, 보고를 받은 뒤 자동 모드를 끄고 작업을 이어 가게 했습니다.
+**Situation**: In Claude Code auto mode, a file write was refused with "the safety classifier could not decide", with a note that retrying would give the same result. Meanwhile the user sent another request (check a PDF); after the report the user turned off auto mode and let the work continue.
 
-**규칙**
-- 같은 작업을 셸 명령(헤레독, `Set-Content` 등)으로 바꿔서 우회하지 않습니다.
-- 무엇이 저장되지 않았는지와 이유를 바로 알리고, 권한 모드를 바꿔 달라고 요청합니다.
-- 기다리는 동안 읽기 전용 작업(자료 확인, 검토)은 계속하고, 권한이 풀리면 바로 이어서 씁니다.
+**Rules**
+- Do not get around it by switching to shell commands (heredoc, `Set-Content`, etc.).
+- Say right away what was not saved and why, and ask to change the permission mode.
+- While waiting, keep doing read-only work (reading material, review), and write as soon as permission is back.

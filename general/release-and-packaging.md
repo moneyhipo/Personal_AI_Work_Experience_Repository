@@ -1,57 +1,57 @@
-# 릴리스와 패키징
+# Releases and packaging
 
-## 공개 작업 전에는 버전·노트·첨부를 한 번에 확정받는다
+## Before going public, get version, notes and attachments confirmed in one go
 
-**상황**: 사용자가 "올리셈"이라고 해서 AI가 추천한 v1.1.0으로 태그와 릴리스를 올렸는데, 사용자는 v1.0.2를 원했습니다. 태그 삭제, 재릴리스, 수정 커밋을 해야 했고 잘못된 커밋은 기록에 남았습니다.
+**Situation**: The user said "올리셈" (upload it), and the AI put up the tag and release as its recommended v1.1.0; the user wanted v1.0.2. The tag had to be deleted, re-released and a fix commit made; the wrong commit stayed in history.
 
-**규칙**
-- 태그, 릴리스, push 직전에는 버전 번호, 릴리스 노트, 첨부 파일을 한 번에 보여 주고 확인받습니다.
-- "올려"라는 지시가 있어도 버전이 정해지지 않았으면 다시 묻습니다. 후보가 둘이면 명시적으로 고르게 합니다.
-- 버전 문자열이 들어간 모든 곳(메타데이터 파일 각 언어판, README, zip 이름)을 grep으로 찾아 함께 바꿉니다.
+**Rules**
+- Right before tagging, releasing or pushing, show the version number, release notes and attached files together and get confirmation.
+- Even with an "upload it" instruction, ask again if the version is not set. If there are two candidates, make the user pick explicitly.
+- `grep` every place that carries the version string (metadata files in each language, README, zip names) and change them together.
 
-## 릴리스 산출물은 항상 최신 소스로 새로 빌드한다
+## Always build release artifacts fresh from the latest source
 
-**상황**: 사용자가 예전 릴리스 zip의 DLL을 재사용하면 되냐고 물었습니다. 그러면 이후 커밋이 빠집니다.
+**Situation**: The user asked if the DLL from an old release zip could be reused. That would drop later commits.
 
-**규칙**: 산출물은 HEAD에서 새로 빌드합니다. 옛 zip은 폴더 구조를 참고하는 용도로만 씁니다. 패키징은 이전 배포판을 풀어 구조를 비교한 뒤 같은 형태로 맞춥니다. 가능하면 `make_release` 같은 스크립트로 자동화합니다.
+**Rules**: Build artifacts fresh from HEAD. Use old zips only as a reference for folder structure. For packaging, unpack the previous release, compare structure, and match it. Automate with a script like `make_release` where possible.
 
-## 원본 파일을 고치는 설치 방식은 다른 패치와 충돌한다
+## Installs that edit original files clash with other patches
 
-**상황**: 모드 설치가 게임의 설정 파일(`plugins.js`)을 수정했는데, 한글패치가 그 파일을 통째로 교체해서 모드 등록이 사라졌습니다.
+**Situation**: The mod install edited the game's config file (`plugins.js`), and a Korean patch replaced that file wholesale, so the mod registration vanished.
 
-**규칙**
-- 다른 패치가 덮어쓸 가능성이 적은 진입점(로더 방식)으로 설치합니다.
-- 원본을 수정할 때는 항상 백업(`.bak_original`, `.bak_<시각>`)하고, 되돌리는 방법을 README에 적습니다.
+**Rules**
+- Install through an entry point other patches are unlikely to overwrite (a loader approach).
+- When editing an original, always back it up (`.bak_original`, `.bak_<time>`) and write how to revert in the README.
 
-## 저작권이 있는 파일은 저장소에 올리지 않는다
+## Do not put copyrighted files in the repository
 
-**규칙**
-- 게임 원본 파일, 디컴파일 결과, 스크린샷은 올리지 않습니다. 모드 파일, 문서, 도구만 올립니다.
-- `dist/`, `bin/`, `obj/`, 참조 DLL 폴더(`refs/` 등)는 `.gitignore`에 넣습니다.
-- 디컴파일 결과는 비공개 저장소나 로컬에만 둡니다.
+**Rules**
+- No original game files, decompiled output or screenshots. Only mod files, docs and tools.
+- Put `dist/`, `bin/`, `obj/` and reference DLL folders (`refs/` etc.) in `.gitignore`.
+- Keep decompiled output only in a private repository or locally.
 
-## 작업 위치와 저장소가 다르면 복사 단계를 잊지 않는다
+## If the work folder and the repository differ, do not forget the copy step
 
-**상황**: 게임 폴더에서 직접 작업하고 저장소는 따로 있었습니다.
+**Situation**: Work happened directly in the game folder, with the repository elsewhere.
 
-**규칙**: 커밋 전에 바뀐 파일을 저장소로 복사하는 단계를 README에 적어 두고, 매번 확인합니다.
+**Rules**: Write the step of copying changed files into the repository before committing in the README, and check it every time.
 
-## 배포 페이지 문서는 플랫폼 형식에 맞춘다
+## Fit release page docs to the platform's format
 
-**상황**: Nexus용 txt 설명이 "벽돌체"처럼 붙어 보였습니다.
+**Situation**: A txt description for Nexus looked like one solid "brick".
 
-**규칙**
-- Nexus 편집기는 서식 있는 붙여넣기를 지원합니다. HTML로 만들어 브라우저에서 복사하게 하고, 안 되면 BBCode로 만듭니다.
-- 사용자는 버전별 구분보다 "버그 수정 / 옵션"처럼 주제별로 합친 단순한 구성을 선호했습니다.
-- 제목에 적은 건수와 실제 목록 항목 수가 맞는지 확인합니다.
-- README에 테스트 환경(프로그램 버전, 로더 버전)과 로그 파일 경로를 적습니다. 다른 로더나 버전과의 호환성을 확인하지 않았으면 "테스트하지 않음"으로 명시합니다.
+**Rules**
+- The Nexus editor supports rich paste. Make HTML and have the user copy from the browser; if that fails, make BBCode.
+- The user preferred a simple layout grouped by topic ("bug fixes / options") over per-version sections.
+- Check that the count in a heading matches the number of list items.
+- Write the test environment (program version, loader version) and log file path in the README. If compatibility with other loaders or versions was not checked, state "not tested".
 
-## 배포 직전 체크리스트
+## Pre-release checklist
 
-- [ ] 브랜치와 작업 트리(`git status --short`)가 의도한 상태인지.
-- [ ] 버전 문자열이 코드·메타데이터·문서·압축 파일명에서 같은지.
-- [ ] 전체 테스트 결과와 게임(실제 환경)에서 확인 안 한 범위.
-- [ ] 배포 파일이 최신 소스로 새로 만들어졌는지. 압축을 임시 폴더에 풀어 내부 경로가 설치 안내와 맞는지.
-- [ ] 라이선스·저작권 파일, 비밀 정보·개인 경로·토큰이 들어가지 않았는지.
-- [ ] 사용자에게 버전, 변경 요약, 첨부 파일, 공개 범위를 보여 주고 승인받았는지.
-- [ ] 올린 뒤 플랫폼에서 실제 게시된 파일·설명·태그를 다시 조회했는지.
+- [ ] Branch and working tree (`git status --short`) are as intended.
+- [ ] Version string is the same across code, metadata, docs and archive names.
+- [ ] Full test results, and the scope not checked in the real game/environment.
+- [ ] Release files were freshly built from the latest source. Unpack the archive into a temp folder and check internal paths match the install guide.
+- [ ] License/copyright files present; no secrets, personal paths or tokens inside.
+- [ ] Version, change summary, attachments and audience were shown to the user and approved.
+- [ ] After uploading, the actually published files, description and tag were queried again on the platform.

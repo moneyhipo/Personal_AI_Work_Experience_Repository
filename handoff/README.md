@@ -1,17 +1,17 @@
-# handoff/ — 프로젝트 인수인계
+# handoff/ - project handover
 
-Claude Code가 작업하던 프로젝트를 다른 AI(Codex 등)가 이어받을 때 읽는 문서입니다(2026-10-16 기준).
+Docs read when another AI (Codex etc.) takes over a project Claude Code was working on (as of 2026-10-16).
 
-(구버전, 2026-10-16 방식, 보관용) 각 폴더의 `AGENTS.md`를 해당 프로젝트 저장소 루트에 복사하면, Codex가 작업을 시작할 때 자동으로 읽습니다. 지금은 프로젝트 저장소에 복사하지 않고, 각 저장소의 `CLAUDE.md`가 이 폴더의 `AGENTS.md`를 직접 가리킵니다(사용자 2026-10-31).
+(Old way, 2026-10-16, kept for record) Copying a folder's `AGENTS.md` to the project repository root made Codex read it automatically at start. Now it is not copied; each repository's `CLAUDE.md` points straight at the `AGENTS.md` in this folder (user 2026-10-31).
 
-| 폴더 | 프로젝트 | 저장소 |
+| Folder | Project | Repository |
 |---|---|---|
-| [lobotomy-bugfix/](lobotomy-bugfix/AGENTS.md) | Lobotomy Corporation 바닐라 버그픽스 (BaseMod, Harmony 1) | moneyhipo/Lobotomy-Corporation-Bug-fixes |
-| [fh2-termina-coop/](fh2-termina-coop/AGENTS.md) | Fear & Hunger 2: Termina ATB + 코옵 | moneyhipo/Fear-Hunger-2-Termina-multi-ATP |
-| [ltc-multi-private/](ltc-multi-private/AGENTS.md) | Mirror 멀티플레이 모드 포크 | 비공개 |
+| [lobotomy-bugfix/](lobotomy-bugfix/AGENTS.md) | Lobotomy Corporation vanilla bug fixes (BaseMod, Harmony 1) | moneyhipo/Lobotomy-Corporation-Bug-fixes |
+| [fh2-termina-coop/](fh2-termina-coop/AGENTS.md) | Fear & Hunger 2: Termina ATB + co-op | moneyhipo/Fear-Hunger-2-Termina-multi-ATP |
+| [ltc-multi-private/](ltc-multi-private/AGENTS.md) | Mirror multiplayer mod fork | private |
 
-## 받는 쪽 AI가 지킬 순서
-1. 이 저장소의 `general/`과 `game/` 교훈을 먼저 읽습니다.
-2. 프로젝트의 `AGENTS.md`와, 거기서 가리키는 문서를 읽습니다.
-3. 첫 작업은 코드 수정이 아닌 분석입니다. 구조와 남은 일을 파악해서 사용자에게 보고합니다.
-4. 이후에는 작은 수정 하나씩 진행합니다. 바꾼 기능의 필터 테스트를 돌리고(전체 묶음은 버전을 올리기 직전에만), 게임 실행 확인은 사용자에게 요청합니다.
+## Order for the receiving AI
+1. Read the lessons in this repository's `general/` and `game/` first.
+2. Read the project's `AGENTS.md` and the docs it points to.
+3. The first job is analysis, not code changes. Work out the structure and what is left, and report to the user.
+4. After that, one small change at a time. Run the filter tests for the changed feature (full suite only right before a version bump), and ask the user to check it in the game.

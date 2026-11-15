@@ -1,15 +1,16 @@
-# 작업 전에 먼저 읽기
+# Read first
 
-어떤 프로젝트든 일을 시작하기 전에 아래 순서로 읽는다.
+Before starting work on any project, read in this order.
 
-1. `Personal_AI_Work_Experience_Repository\README.md`를 읽는다. 거기 적힌 읽는 순서대로 `general/` 전부와 프로젝트 종류에 맞는 카테고리 폴더(게임 모드는 `game/`)를 읽고 규칙을 따른다.
-2. 프로젝트별 인수인계 문서 `Personal_AI_Work_Experience_Repository/handoff/<프로젝트>/AGENTS.md`를 읽는다. 프로젝트 폴더 안에 `AGENTS.md`가 있으면 그것도 읽는다.
-3. 작업하다 새 교훈이 생기면 경험 저장소에 추가한다.
+1. Read `Personal_AI_Work_Experience_Repository\README.md`. Following its reading order, read all of `general/` and the category folder for the project type (game mods: `game/`), and follow the rules.
+2. Read the project handoff `Personal_AI_Work_Experience_Repository/handoff/<project>/AGENTS.md`. If the project folder has its own `AGENTS.md`, read that too.
+3. When work produces a new lesson, add it to this repository.
 
-## 항상 지킬 것
-- **채팅 답변은 항상 한국어로 쓴다.** 중간 보고와 최종 보고도 마찬가지다. 게임 모드 UI 문구가 영어라는 규칙은 게임 화면에만 적용된다.
-- **서브 에이전트는 병렬로 동시에 돌릴 수 있는 작업에만 쓴다**(사용자 2026-10-30, 토큰). 큰 기능도 메인 세션에서 직접 작성하고, 끝나면 메인 세션에서 diff를 처음부터 다시 읽어 검수한다(끊김·사망·저장·래퍼 순서와 겹치는 경로). 검수에서 나온 문제를 고친 뒤 관련 테스트(이름 필터)를 다시 돌린다.
-- **전체 테스트 묶음은 버전을 올리기 직전에만 돌린다**(사용자 2026-10-30, 시간). 평소에는 바꾼 기능의 필터 테스트만 돌리고 결과를 보고한다.
-- 커밋·푸시는 사용자가 요청할 때만 한다.
-- 작업 전에 `git status --short`와 `git diff --stat`으로 이미 있는 변경을 확인하고, 사용자나 다른 AI 도구의 수정을 덮어쓰지 않는다.
-- 세이브·설정·공개 릴리스·대량 삭제·대량 치환은 대상 확인과 백업(되돌릴 방법)을 먼저 한다.
+## Always
+- **Always reply to the user in Korean**, including progress and final reports. The "mod UI text is English" rule applies only to what shows on the game screen.
+- **This repository is read only by AIs, so write it in English** (user 2026-11-15, fewer tokens). Project docs the user reads stay in Korean.
+- **Use sub-agents only for work that can really run in parallel** (user 2026-10-30, tokens). Write even large features in the main session, then reread the whole diff in the main session (paths that cross disconnects, deaths, saves, wrapper order). After fixing what the review finds, rerun the related tests (name filters).
+- **Run the full test suite only right before a version bump** (user 2026-10-30, time). Otherwise run only the filter tests for the changed feature and report the result.
+- Commit and push only when the user asks.
+- Before work, check existing changes with `git status --short` and `git diff --stat`; do not overwrite edits by the user or another AI tool.
+- For saves, settings, public releases, mass deletes and mass replaces, first confirm the target and make a backup (a way back).
