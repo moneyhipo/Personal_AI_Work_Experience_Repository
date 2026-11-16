@@ -8,6 +8,7 @@ Handover for coding agents (Codex etc.). Claude Code worked on it up to 2026-10-
 - Size: bug fixes, an error log feature, and balance switches (off by default, toggled in game with F8).
 
 ## Rules for working with the user (must follow)
+0. **Classify by developer intent, not by difficulty direction** (user 2026-11-16): intended behaviour that the code/data clearly shows but a bug blocks = always a bug fix, easier or harder. Intent not clear and the fix changes balance = balance switch (off by default). Not a bug at all = fun tab or leave out.
 1. **Never slip in balance-changing fixes.**
    - Show the user first. If approved, add it as a balance switch that is off by default (`BalanceToggles.cs`).
    - Word switch descriptions neutrally: "Changes X to Y. Vanilla is Z." Do not call a switch a "bug fix".
