@@ -42,6 +42,7 @@ This is moneyhipo's personal repository, shared as a reference for the team proj
 | [modding-common.md](game/modding-common.md) | Game modding in general: judging bugs, data analysis, turning a game multiplayer |
 | [unity-mono-harmony.md](game/unity-mono-harmony.md) | Unity Mono games + Harmony/BaseMod C# mods |
 | [rpgmaker-mv-nwjs.md](game/rpgmaker-mv-nwjs.md) | RPG Maker MV/MZ (NW.js) JS plugin mods, translation patches (Hendrix) |
+| [rpgmaker-vxace-rgss3.md](game/rpgmaker-vxace-rgss3.md) | RPG Maker VX Ace (RGSS3) translation patches: rebuilding the archive, Korean font metrics |
 
 ### handoff/ (project handover)
 | Doc | Content |
