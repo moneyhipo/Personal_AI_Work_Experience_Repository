@@ -107,6 +107,16 @@
 - Write even large features in the main session. Do not skip review: the main session rereads the diff from the start and looks for failure scenarios from the angle in the section below (paths that cross existing features).
 - Use the "writer agent → reviewer agent" section below only as a reference for what to look at in review.
 
+## Translation work: main session only, no sub-agents
+
+**Situation**: A 5,400-line game scenario translation (Depersonalization London scenario, Chinese → Korean) was split into six chunks and run by parallel sub-agents, which ran on Sonnet. Each agent drifted on its own: one wrote 108 narration lines in 해라체 (~했다) while the rest used 하십시오체 (~했습니다), names diverged (红礼 → 홍례/레드라이트, 工贼 → 파업 파괴자/파업 방해꾼), quote style differed, and one speaker mixed registers in a single line. Fixing it took a separate lint-and-repair pass. The user: "for translation like this, don't run sub-agents; do it slowly in the main chat" (2026-11-19).
+
+**Rules**
+- Translation, localization, and rewriting text for tone: do it **in the main session, batch by batch**, even when it is large and could be split. The parallel-work exception does not apply.
+- Settle a style and glossary file first (register per text type, names, official game terms), then translate in order. Show the user a pilot batch and test it in the real game before the bulk.
+- After each batch, run the format check (tags, newlines, variables, leftover source characters) and a style check (narration register, quote style, mixed registers in one speaker's line).
+- Look up fixed terms the user cares about (mythos names, social terms) on wikis instead of inventing them (e.g., 伏行之混沌 → 기어다니는 혼돈 per Namuwiki, 工贼 → 파업파괴자 per Korean Wikipedia).
+
 ## Large features as one bundle "writer agent → reviewer agent" (old way)
 
 **Situation**: Building a large feature in one go meant the user found bugs in play tests, it got fixed, and tested again, many rounds. The user asked: "bundle a code-writing agent and a code-review agent together so the work isn't repeated".
