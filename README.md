@@ -43,6 +43,7 @@ This is moneyhipo's personal repository, shared as a reference for the team proj
 | [unity-mono-harmony.md](game/unity-mono-harmony.md) | Unity Mono games + Harmony/BaseMod C# mods |
 | [rpgmaker-mv-nwjs.md](game/rpgmaker-mv-nwjs.md) | RPG Maker MV/MZ (NW.js) JS plugin mods, translation patches (Hendrix) |
 | [rpgmaker-vxace-rgss3.md](game/rpgmaker-vxace-rgss3.md) | RPG Maker VX Ace (RGSS3) translation patches: rebuilding the archive, Korean font metrics |
+| [ai-illustration.md](game/ai-illustration.md) | AI illustration for game assets (NovelAI): prompt rules, negative prompt traps, soft pastel style, character consistency, retouching upscales |
 
 ### handoff/ (project handover)
 | Doc | Content |
