@@ -30,9 +30,9 @@ Handover for coding agents (Claude Code, Codex, etc.). **Rules, paths and comman
 ## Paths per PC
 | | Laptop (2026-10-29~) | Main PC |
 |---|---|---|
-| Repository | `C:\git_desk\FH2\...` | `D:\git_desk\FH2\...` |
+| Repository | `C:\git_desk\FH2\...` | `D:\git_desk\mods\FH2\...` |
 | Game | `C:\Program Files (x86)\Steam\steamapps\common\Fear & Hunger 2 Termina\` | `D:\steam\steamapps\common\Fear & Hunger 2 Termina\` |
-| Test game copy (English original) | `FH2_GAME=C:/git_desk/FH2/FH2_dev_game` | `FH2_GAME=D:/git_desk/FH2/FH2_dev_game` |
+| Test game copy (English original) | `FH2_GAME=C:/git_desk/FH2/FH2_dev_game` | `FH2_GAME=D:/git_desk/mods/FH2/FH2_dev_game` |
 | Machine | 16GB, i5-13420H, Node 26, .NET 10, python 3.12 | 16GB |
 
 - The Steam game folder has the Korean patch, so English text checks fail if you test with it. Test with the copy.
